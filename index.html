@@ -1,0 +1,1251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  />
+  <title>YouTube Quiz Creator</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Arial', sans-serif;
+      background: linear-gradient(
+        -45deg,
+        #ee7752,
+        #e73c7e,
+        #23a6d5,
+        #23d5ab
+      );
+      background-size: 400% 400%;
+      animation: gradientBG 15s ease infinite;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    @keyframes gradientBG {
+      0% {
+        background-position: 0% 50%;
+      }
+      50% {
+        background-position: 100% 50%;
+      }
+      100% {
+        background-position: 0% 50%;
+      }
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .home-screen {
+      background: rgba(255, 255, 255, 0.95);
+      border-radius: 20px;
+      padding: 40px;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      width: 100%;
+      max-width: 600px;
+    }
+
+    .logo {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    .logo h1 {
+      color: #333;
+      font-size: 2.5rem;
+      margin-bottom: 10px;
+      background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .logo p {
+      color: #666;
+      font-size: 1.1rem;
+    }
+
+    .tabs {
+      display: flex;
+      margin-bottom: 20px;
+      border-radius: 10px;
+      overflow: hidden;
+      background: #f0f0f0;
+    }
+
+    .tab {
+      flex: 1;
+      padding: 15px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-weight: bold;
+    }
+
+    .tab.active {
+      background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
+      color: white;
+    }
+
+    .tab:not(.active):hover {
+      background: #e0e0e0;
+    }
+
+    .tab-content {
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    .json-input {
+      width: 100%;
+      height: 200px;
+      padding: 15px;
+      border: 2px solid #ddd;
+      border-radius: 10px;
+      font-family: 'Courier New', monospace;
+      font-size: 14px;
+      resize: vertical;
+      transition: border-color 0.3s ease;
+    }
+
+    .json-input:focus {
+      outline: none;
+      border-color: #4ecdc4;
+    }
+
+    .manual-input {
+      margin-bottom: 20px;
+    }
+
+    .question-form {
+      background: #f9f9f9;
+      padding: 20px;
+      border-radius: 10px;
+      margin-bottom: 15px;
+    }
+
+    .form-group {
+      margin-bottom: 15px;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: bold;
+      color: #333;
+    }
+
+    .form-group input[type='text'],
+    .form-group select {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      font-size: 14px;
+    }
+
+    .options-container {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 15px;
+    }
+
+    .correct-answer-select {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+    }
+
+    
+
+    .subscribe {
+      background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
+      color: white;
+      border: none;
+      padding: 15px 30px;
+      border-radius: 10px;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      margin: 5px;
+    }
+
+    .btn-sbs{
+        background: linear-gradient(45deg, #ff1515, #f70000);
+      color: white;
+      border: none;
+      padding: 15px 30px;
+      border-radius: 10px;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      margin: 5px;
+    }
+
+    .btn {
+      background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
+      color: white;
+      border: none;
+      padding: 15px 30px;
+      border-radius: 10px;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      margin: 5px;
+    }
+
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+    }
+
+    .btn-secondary {
+      background: #6c757d;
+    }
+
+    .generate-btn {
+      width: 100%;
+      margin-top: 20px;
+      padding: 20px;
+      font-size: 18px;
+    }
+
+    /* Quiz Screen Styles */
+    .quiz-screen {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: linear-gradient(
+        -45deg,
+        #667eea,
+        #764ba2,
+        #f093fb,
+        #f5576c
+      );
+      background-size: 400% 400%;
+      animation: gradientBG 15s ease infinite;
+      z-index: 1000;
+      transition: background 0.5s ease;
+    }
+
+    .quiz-screen.ended {
+      background: white;
+      animation: none;
+    }
+
+    .quiz-container {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      padding: 20px;
+      position: relative;
+    }
+
+    .quiz-header {
+      position: absolute;
+      top: 30px;
+      left: 50%;
+      transform: translateX(-50%);
+      color: white;
+      font-size: 1.5rem;
+      font-weight: bold;
+      z-index: 1001;
+    }
+
+    .quiz-screen.ended .quiz-header {
+      color: #333;
+    }
+
+    .question-card {
+      background: rgba(255, 255, 255, 0.95);
+      border-radius: 20px;
+      padding: 40px;
+      box-shadow: 0 25px 50px rgba(0, 0, 0, 0.2);
+      backdrop-filter: blur(15px);
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      max-width: 600px;
+      width: 90%;
+      text-align: center;
+      transform: translateX(0);
+      transition: transform 0.5s ease, opacity 0.5s ease;
+    }
+
+    .question-card.slide-out {
+      transform: translateX(-100vw);
+      opacity: 0;
+    }
+
+    .question-card.slide-in {
+      transform: translateX(100vw);
+      opacity: 0;
+      animation: slideIn 0.5s ease forwards;
+    }
+
+    @keyframes slideIn {
+      to {
+        transform: translateX(0);
+        opacity: 1;
+      }
+    }
+
+    .question-text {
+      font-size: 1.8rem;
+      color: #333;
+      margin-bottom: 30px;
+      font-weight: bold;
+      line-height: 1.4;
+    }
+
+    .timer-circle {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      background: conic-gradient(
+        #4ecdc4 360deg,
+        #f0f0f0 360deg
+      );
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      z-index: 1005;
+      margin: 0;
+      transition: background 0.2s linear;
+    }
+
+    .timer-circle::before {
+      content: '';
+      position: absolute;
+      width: 60px;
+      height: 60px;
+      background: white;
+      border-radius: 50%;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+
+    .timer-number {
+      font-size: 2rem;
+      font-weight: bold;
+      color: #333;
+      position: relative;
+      z-index: 1;
+    }
+
+    .options-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 15px;
+      margin-top: 30px;
+    }
+
+    .option {
+      background: #f8f9fa;
+      border: 2px solid #e9ecef;
+      border-radius: 15px;
+      padding: 20px;
+      font-size: 1.1rem;
+      font-weight: 500;
+      color: #333;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      position: relative;
+      text-align: left;
+      display: flex;
+      align-items: center;
+    }
+
+    .option:hover {
+      background: #e9ecef;
+      transform: translateY(-2px);
+    }
+
+    /* New: style for letter-box inside option */
+    .option-label {
+      display: inline-block;
+      width: 30px;
+      height: 30px;
+      line-height: 30px;
+      border: 2px solid #4ecdc4;
+      border-radius: 50%;
+      text-align: center;
+      font-weight: bold;
+      margin-right: 10px;
+      color: #4ecdc4;
+      flex-shrink: 0;
+    }
+
+    .option.correct {
+      background: #d4edda;
+      color: #155724;
+      border: 3px solid #28a745 !important;
+    }
+
+    .option.correct::after {
+      content: '✓';
+      position: absolute;
+      top: -10px;
+      right: -10px;
+      background: #28a745;
+      color: white;
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-weight: bold;
+      font-size: 1.2rem;
+    }
+
+    .subscribe-popup {
+      display: none;
+      position: fixed;
+      opacity: 0;
+      transform: translate(-50%, 100px);
+      left: 50%;
+      top: 50%;
+      background: rgba(255, 255, 255, 0.98);
+      border-radius: 20px;
+      padding: 30px 40px;
+      box-shadow: 0 25px 50px rgba(0, 0, 0, 0.3);
+      border: 1px solid rgba(0, 0, 0, 0.1);
+      text-align: center;
+      z-index: 1001;
+      transition: opacity 0.8s ease, transform 0.8s ease;
+    }
+
+    .subscribe-popup.show {
+      opacity: 1;
+      transform: translate(-50%, -50%);
+    }
+
+    .subscribe-popup h2 {
+      color: #333;
+      margin-bottom: 15px;
+      font-size: 1.8rem;
+    }
+
+    .subscribe-popup p {
+      color: #666;
+      margin-bottom: 20px;
+    }
+
+    .questions-list {
+      max-height: 300px;
+      overflow-y: auto;
+      margin-bottom: 20px;
+    }
+
+    .question-item {
+      background: #f8f9fa;
+      border: 1px solid #dee2e6;
+      border-radius: 10px;
+      padding: 15px;
+      margin-bottom: 10px;
+    }
+
+    .question-item h4 {
+      color: #333;
+      margin-bottom: 10px;
+    }
+
+    .question-item .options {
+      font-size: 0.9rem;
+      color: #666;
+    }
+
+    .question-item .correct {
+      color: #28a745;
+      font-weight: bold;
+    }
+
+    .error {
+      color: #dc3545;
+      background: #f8d7da;
+      border: 1px solid #f5c6cb;
+      border-radius: 5px;
+      padding: 10px;
+      margin: 10px 0;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    @media (max-width: 768px) {
+      .options-grid {
+        grid-template-columns: 1fr;
+      }
+      .options-container {
+        grid-template-columns: 1fr;
+      }
+      .question-text {
+        font-size: 1.4rem;
+      }
+      .timer-circle {
+        width: 70px;
+        height: 70px;
+        top: 15px;
+        right: 15px;
+      }
+      .timer-circle::before {
+        width: 50px;
+        height: 50px;
+      }
+      .timer-number {
+        font-size: 1.8rem;
+      }
+      .quiz-header {
+        font-size: 1.2rem;
+        top: 20px;
+      }
+      .home-screen {
+        padding: 20px;
+      }
+      .logo h1 {
+        font-size: 2rem;
+      }
+      .logo p {
+        font-size: 1rem;
+      }
+      .btn {
+        padding: 12px 24px;
+        font-size: 14px;
+      }
+      .generate-btn {
+        padding: 15px;
+        font-size: 16px;
+      }
+      .subscribe-popup {
+        width: 90%;
+        padding: 20px;
+      }
+      .subscribe-popup h2 {
+        font-size: 1.5rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Home Screen -->
+  <div class="container" id="homeScreen">
+    <div class="home-screen">
+      <div class="logo">
+        <h1>🎯 Quiz Creator</h1>
+        <p>Create engaging YouTube quiz videos in seconds</p>
+      </div>
+
+      <div class="tabs">
+        <div class="tab active" onclick="switchTab('json')">
+          JSON Input
+        </div>
+        <div class="tab" onclick="switchTab('manual')">
+          Manual Input
+        </div>
+      </div>
+
+      <div class="tab-content active" id="jsonTab">
+        <textarea
+          class="json-input"
+          id="jsonInput"
+          placeholder='Paste your JSON here or upload a file...
+{
+  "questions": [
+    {
+      "question": "What is the capital of India?",
+      "options": ["Mumbai", "New Delhi", "Kolkata", "Chennai"],
+      "correct_answer": "New Delhi"
+    }
+  ]
+}'
+        ></textarea>
+        <input
+          type="file"
+          id="jsonFile"
+          accept=".json"
+          style="display: none"
+          onchange="handleFileUpload(event)"
+        />
+        <button
+          class="btn btn-secondary"
+          onclick="document.getElementById('jsonFile').click()"
+        >
+          📁 Upload JSON File
+        </button>
+        <!-- Added "Past JSON" and "Copy Prompt" buttons -->
+        <button class="btn btn-secondary" onclick="loadPreviousJSON()">
+        Past JSON
+        </button>
+       <button class="btn btn-secondary" onclick="copyPrompt(event)">
+        Copy Prompt
+        </button>
+      </div>
+
+      <div class="tab-content" id="manualTab">
+        <div class="question-form">
+          <div class="form-group">
+            <label for="questionTextManual">Question:</label>
+            <input
+              type="text"
+              id="questionTextManual"
+              placeholder="Enter your question here..."
+            />
+          </div>
+          <div class="options-container">
+            <input
+              type="text"
+              id="option1"
+              placeholder="Option 1"
+            />
+            <input
+              type="text"
+              id="option2"
+              placeholder="Option 2"
+            />
+            <input
+              type="text"
+              id="option3"
+              placeholder="Option 3"
+            />
+            <input
+              type="text"
+              id="option4"
+              placeholder="Option 4"
+            />
+          </div>
+          <div class="form-group">
+            <label for="correctAnswer">Correct Answer:</label>
+            <select id="correctAnswer" class="correct-answer-select">
+              <option value="">Select correct answer</option>
+              <option value="0">Option 1</option>
+              <option value="1">Option 2</option>
+              <option value="2">Option 3</option>
+              <option value="3">Option 4</option>
+            </select>
+          </div>
+          <button class="btn" onclick="addQuestion()">
+            ➕ Add Question
+          </button>
+        </div>
+
+        <div class="questions-list" id="questionsList"></div>
+      </div>
+
+      <div id="errorMessage" class="error hidden"></div>
+
+      <button class="btn generate-btn" onclick="generateQuiz()">
+        🎬 Generate Quiz Video
+      </button>
+    </div>
+  </div>
+
+  <!-- Quiz Screen -->
+  <div class="quiz-screen" id="quizScreen">
+    <div class="quiz-header" id="quizHeaderElement">
+      <span id="questionCounter">Question 1 of 5</span>
+    </div>
+    <div class="timer-circle" id="timerCircle">
+      <div class="timer-number" id="timerNumber">5</div>
+    </div>
+
+    <div class="quiz-container">
+      <div class="question-card" id="questionCard">
+        <div class="question-text" id="questionTextQuiz"></div>
+        <div class="options-grid" id="optionsGrid"></div>
+      </div>
+    </div>
+
+    <div class="subscribe-popup" id="subscribePopup">
+      <!-- <h2>🎉 Quiz Complete!</h2> -->
+      <p>Subscribe for more educational content like this!</p>
+      <button class="btn-sbs" onclick="finishQuiz()">
+        Subscribe 👆
+      </button>
+    </div>
+  </div>
+
+  <script>
+    let currentTab = 'json';
+    let questions = [];
+    let currentQuestionIndex = 0;
+
+let audioChoose;          // placeholder for “choose the correct answer”
+let audioBG;              // placeholder for background loop
+let audioSubscribeNow;    // placeholder for “subscribe now”
+let audioTick;            // placeholder for timer-tick sound (old system)
+let audioCorrect;         // placeholder for correct-answer sound (old system)
+
+
+    const optionPrefixes = ['A', 'B', 'C', 'D'];
+
+    function switchTab(tabName) {
+      currentTab = tabName;
+      document
+        .querySelectorAll('.tab')
+        .forEach(function (t) {
+          t.classList.remove('active');
+        });
+      const activeTabButton =
+        tabName === 'json'
+          ? document.querySelector('.tab:nth-child(1)')
+          : document.querySelector('.tab:nth-child(2)');
+      if (activeTabButton) activeTabButton.classList.add('active');
+      document
+        .querySelectorAll('.tab-content')
+        .forEach(function (t) {
+          t.classList.remove('active');
+        });
+      const activeTabContent = document.getElementById(
+        tabName + 'Tab'
+      );
+      if (activeTabContent)
+        activeTabContent.classList.add('active');
+    }
+
+    function handleFileUpload(event) {
+      const file = event.target.files[0];
+      if (file && file.type === 'application/json') {
+        const reader = new FileReader();
+        reader.onload = function (e) {
+          document.getElementById('jsonInput').value =
+            e.target.result;
+        };
+        reader.readAsText(file);
+      } else {
+        showError('Please select a valid JSON file.');
+      }
+    }
+
+    function addQuestion() {
+      const questionTextInput = document
+        .getElementById('questionTextManual')
+        .value.trim();
+      const opts = [
+        document
+          .getElementById('option1')
+          .value.trim(),
+        document
+          .getElementById('option2')
+          .value.trim(),
+        document
+          .getElementById('option3')
+          .value.trim(),
+        document
+          .getElementById('option4')
+          .value.trim(),
+      ];
+      const correctIndex = document.getElementById(
+        'correctAnswer'
+      ).value;
+
+      if (
+        !questionTextInput ||
+        opts.some(function (opt) {
+          return !opt;
+        }) ||
+        correctIndex === ''
+      ) {
+        showError('Please fill in all fields for the question.');
+        return;
+      }
+      questions.push({
+        question: questionTextInput,
+        options: opts,
+        correct_answer: opts[parseInt(correctIndex)],
+      });
+      updateQuestionsList();
+      clearManualForm();
+      hideError();
+    }
+
+    function updateQuestionsList() {
+      const listContainer = document.getElementById(
+        'questionsList'
+      );
+      listContainer.innerHTML = '';
+      questions.forEach(function (q, index) {
+        const item = document.createElement('div');
+        item.className = 'question-item';
+        item.innerHTML =
+          '<h4>Q' +
+          (index + 1) +
+          ': ' +
+          q.question +
+          '</h4>' +
+          '<div class="options">Opts: ' +
+          q.options.join(', ') +
+          '</div>' +
+          '<div class="correct">Ans: ' +
+          q.correct_answer +
+          '</div>' +
+          '<button class="btn btn-secondary" onclick="removeQuestion(' +
+          index +
+          ')" style="margin-top:10px;padding:5px 10px;font-size:12px;">🗑️ Remove</button>';
+        listContainer.appendChild(item);
+      });
+    }
+
+    function removeQuestion(index) {
+      questions.splice(index, 1);
+      updateQuestionsList();
+    }
+
+    function clearManualForm() {
+      const ids = [
+        'questionTextManual',
+        'option1',
+        'option2',
+        'option3',
+        'option4',
+        'correctAnswer',
+      ];
+      ids.forEach(function (id) {
+        document.getElementById(id).value = '';
+      });
+    }
+
+    function showError(message) {
+      const el = document.getElementById('errorMessage');
+      el.textContent = message;
+      el.classList.remove('hidden');
+    }
+
+    function hideError() {
+      document
+        .getElementById('errorMessage')
+        .classList.add('hidden');
+    }
+
+    // -------------------------------
+    // “Past JSON” and “Copy Prompt” logic
+    // -------------------------------
+
+ async function loadPreviousJSON() {
+  try {
+    const text = await navigator.clipboard.readText();
+    if (text && text.trim().length > 0) {
+      document.getElementById('jsonInput').value = text;
+      hideError();
+    } else {
+      showError('Clipboard is empty or contains no text.');
+    }
+  } catch (err) {
+    showError('Unable to read from clipboard: ' + err.message);
+  }
+}
+
+function copyPrompt(event) {
+  const promptText = 'test prompt data'; // ← update this later with your real prompt
+  navigator.clipboard.writeText(promptText)
+    .then(() => {
+      const btn = event.currentTarget;
+      const original = btn.textContent;
+      btn.textContent = 'Copied!';
+      setTimeout(() => (btn.textContent = original), 1000);
+    })
+    .catch((err) => {
+      showError('Unable to copy prompt: ' + err.message);
+    });
+}
+
+
+    // -------------------------------
+    // Quiz / Audio / Timer Logic
+    // -------------------------------
+
+    // Initialize audio objects (replace paths with actual file URLs)
+   function initCustomAudio() {
+    // NEW: initialize old timer + correct sounds:
+    audioTick = new Audio('/sounds/timer_tick.mp3');          // ← update this path
+    audioCorrect = new Audio('/sounds/correct_answer.mp3');   // ← update this path
+
+    // NEW: initialize placeholders for your three custom clips:
+    audioChoose = new Audio('/sounds/ChooseCorrectAnswer.wav');  // ← update this path
+    audioBG = new Audio('/sounds/background_loop.mp3');                // ← update this path
+    audioBG.loop = true;
+    audioSubscribeNow = new Audio('/sounds/Subscribe Now.wav');         // ← update this path
+    }
+
+
+    function generateQuiz() {
+      hideError();
+      if (!audioChoose) {
+        initCustomAudio();
+      }
+
+      if (currentTab === 'json') {
+        const jsonInput = document
+          .getElementById('jsonInput')
+          .value.trim();
+        if (!jsonInput) {
+          showError(
+            'Please enter JSON data or upload a JSON file.'
+          );
+          return;
+        }
+        try {
+          const data = JSON.parse(jsonInput);
+          if (
+            !data.questions ||
+            !Array.isArray(data.questions) ||
+            data.questions.length === 0
+          ) {
+            showError(
+              'Invalid JSON: "questions" array missing or empty.'
+            );
+            return;
+          }
+          for (let i = 0; i < data.questions.length; i++) {
+            const q = data.questions[i];
+            if (
+              !q.question ||
+              typeof q.question !== 'string' ||
+              !q.options ||
+              !Array.isArray(q.options) ||
+              q.options.length !== 4 ||
+              !q.options.every(function (opt) {
+                return typeof opt === 'string';
+              }) ||
+              !q.correct_answer ||
+              typeof q.correct_answer !== 'string' ||
+              !q.options.includes(q.correct_answer)
+            ) {
+              showError(
+                'Q' +
+                  (i + 1) +
+                  ' invalid. Check format: {question:string, options:[string,string,string,string], correct_answer:string (must be one of options)}'
+              );
+              return;
+            }
+          }
+          questions = data.questions;
+
+          // Save this JSON into localStorage for “Past JSON” feature:
+          localStorage.setItem(
+            'previousJSON',
+            JSON.stringify(data)
+          );
+        } catch (e) {
+          showError('Invalid JSON syntax: ' + e.message);
+          return;
+        }
+      } else {
+        if (questions.length === 0) {
+          showError('Please add at least one question.');
+          return;
+        }
+      }
+      startQuiz();
+    }
+
+    function startQuiz() {
+      currentQuestionIndex = 0;
+
+      if (!document.fullscreenElement) {
+        document.documentElement
+          .requestFullscreen()
+          .catch(() => {
+            // ignore if denied
+          });
+      }
+
+      document.getElementById('homeScreen').style.display =
+        'none';
+      const quizScreenEl = document.getElementById(
+        'quizScreen'
+      );
+      quizScreenEl.classList.remove('ended');
+      quizScreenEl.style.display = 'block';
+      document
+        .getElementById('questionCard')
+        .style.display = '';
+      document
+        .getElementById('quizHeaderElement')
+        .style.display = '';
+
+      // Start background music loop
+      if (audioBG) audioBG.play();
+
+      showQuestion();
+    }
+
+    function showQuestion() {
+      const question = questions[currentQuestionIndex];
+      const questionCard = document.getElementById(
+        'questionCard'
+      );
+
+      document.getElementById('questionCounter').textContent =
+        'Question ' +
+        (currentQuestionIndex + 1) +
+        ' of ' +
+        questions.length;
+      questionCard.className = 'question-card';
+      void questionCard.offsetWidth;
+      questionCard.classList.add('slide-in');
+
+      document.getElementById(
+        'questionTextQuiz'
+      ).textContent = question.question;
+      const optionsGrid = document.getElementById(
+        'optionsGrid'
+      );
+      optionsGrid.innerHTML = '';
+      question.options.forEach(function (
+        optionText,
+        index
+      ) {
+        // Wrap the “A, B, C, D” in a styled <span>
+        const optionDiv = document.createElement('div');
+        optionDiv.className = 'option';
+        optionDiv.dataset.originalOption = optionText;
+
+        // Create a span for the letter box
+        const labelSpan = document.createElement('span');
+        labelSpan.className = 'option-label';
+        labelSpan.textContent = optionPrefixes[index];
+
+        // Create a text node for the actual option text
+        const textNode = document.createTextNode(optionText);
+
+        optionDiv.appendChild(labelSpan);
+        optionDiv.appendChild(textNode);
+
+        optionsGrid.appendChild(optionDiv);
+      });
+
+      resetTimer();
+
+      // Play “choose the correct answer” audio shortly after showing question
+      if (audioChoose) {
+        setTimeout(() => {
+          audioChoose.currentTime = 0;
+          audioChoose.play();
+        }, 300);
+      }
+
+      setTimeout(startCountdown, 800);
+    }
+
+    function resetTimer() {
+      const timerCircle = document.getElementById(
+        'timerCircle'
+      );
+      const timerNumber = document.getElementById(
+        'timerNumber'
+      );
+      timerNumber.textContent = '5';
+      timerCircle.style.background = `conic-gradient(#4ecdc4 360deg, #ddd 360deg)`;
+    }
+
+    const TOTAL_DURATION = 5;
+    let countdownInterval;
+
+function startCountdown() {
+  clearInterval(countdownInterval);
+  let timeLeft = TOTAL_DURATION;
+  const timerNumber = document.getElementById('timerNumber');
+  const timerCircle = document.getElementById('timerCircle');
+
+  timerNumber.textContent = timeLeft.toString();
+  updateTimerCircle(timerCircle, timeLeft);
+
+  countdownInterval = setInterval(function () {
+    timeLeft--;
+    timerNumber.textContent = timeLeft.toString();
+    updateTimerCircle(timerCircle, timeLeft);
+
+    // NEW: play timer-tick sound each second
+    if (audioTick) {
+      audioTick.currentTime = 0;
+      audioTick.play();
+    }
+
+    if (timeLeft <= 0) {
+      clearInterval(countdownInterval);
+      revealAnswer();
+    }
+  }, 1000);
+}
+
+
+    function updateTimerCircle(circleEl, timeLeft) {
+      const elapsedRatio =
+        (TOTAL_DURATION - timeLeft) / TOTAL_DURATION;
+      const elapsedAngle = elapsedRatio * 360;
+      circleEl.style.background = `conic-gradient(#ddd ${elapsedAngle}deg, #4ecdc4 ${elapsedAngle}deg 360deg)`;
+    }
+
+function revealAnswer() {
+  // NEW: play correct-answer sound right before highlighting
+  if (audioCorrect) {
+    audioCorrect.currentTime = 0;
+    audioCorrect.play();
+  }
+
+  const question = questions[currentQuestionIndex];
+  const optionElements = document.querySelectorAll('.option');
+  optionElements.forEach(function (optElement) {
+    if (optElement.dataset.originalOption === question.correct_answer) {
+      optElement.classList.add('correct');
+    }
+  });
+
+  setTimeout(function () {
+    currentQuestionIndex++;
+    if (currentQuestionIndex < questions.length) {
+      const questionCard = document.getElementById('questionCard');
+      questionCard.classList.replace('slide-in', 'slide-out');
+      setTimeout(function () {
+        showQuestion();
+      }, 500);
+    } else {
+      endQuiz();
+    }
+  }, 2000);
+}
+
+
+    function endQuiz() {
+      // Stop background music
+      if (audioBG) audioBG.pause();
+
+      document.getElementById(
+        'questionCard'
+      ).style.display = 'none';
+      document.getElementById(
+        'quizHeaderElement'
+      ).style.display = 'none';
+      document.getElementById(
+        'timerCircle'
+      ).style.display = 'none';
+      document
+        .getElementById('quizScreen')
+        .classList.add('ended');
+
+      // Show subscribe popup
+      const subscribePopup = document.getElementById(
+        'subscribePopup'
+      );
+      subscribePopup.style.display = 'block';
+      setTimeout(function () {
+        subscribePopup.classList.add('show');
+
+        // Play “subscribe now” audio
+        if (audioSubscribeNow) {
+          audioSubscribeNow.currentTime = 0;
+          audioSubscribeNow.play();
+        }
+      }, 100);
+
+      setTimeout(finishQuiz, 3000);
+    }
+
+    function finishQuiz() {
+      if (document.fullscreenElement) {
+        document.exitFullscreen().catch(() => {});
+      }
+
+      const quizScreenEl = document.getElementById(
+        'quizScreen'
+      );
+      quizScreenEl.style.display = 'none';
+      quizScreenEl.classList.remove('ended');
+      document.getElementById('homeScreen').style.display =
+        'flex';
+
+      document.getElementById('questionCard').style.display =
+        '';
+      document.getElementById(
+        'quizHeaderElement'
+      ).style.display = '';
+      document.getElementById('timerCircle').style.display = '';
+
+      const subscribePopup = document.getElementById(
+        'subscribePopup'
+      );
+      subscribePopup.classList.remove('show');
+      setTimeout(
+        function () {
+          subscribePopup.style.display = 'none';
+        },
+        800
+      );
+
+      if (currentTab === 'json') {
+        questions = [];
+        document.getElementById('jsonInput').value = '';
+      }
+      window.scrollTo(0, 0);
+    }
+
+    document.addEventListener(
+      'DOMContentLoaded',
+      function () {
+        switchTab('json');
+        const sampleJSON = {
+          questions: [
+            {
+              question: 'Capital of France?',
+              options: [
+                'Berlin',
+                'Madrid',
+                'Paris',
+                'Rome',
+              ],
+              correct_answer: 'Paris',
+            },
+            {
+              question: 'Largest Planet?',
+              options: [
+                'Earth',
+                'Mars',
+                'Jupiter',
+                'Saturn',
+              ],
+              correct_answer: 'Jupiter',
+            },
+          ],
+        };
+        document.getElementById(
+          'jsonInput'
+        ).placeholder =
+          'Paste JSON or Upload...\n\nExample:\n' +
+          JSON.stringify(sampleJSON, null, 2);
+      }
+    );
+  </script>
+</body>
+</html>
