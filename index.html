@@ -888,14 +888,14 @@ function copyPrompt(event) {
     // Initialize audio objects (replace paths with actual file URLs)
    function initCustomAudio() {
     // NEW: initialize old timer + correct sounds:
-    audioTick = new Audio('/sounds/timer_tick.mp3');          // ← update this path
-    audioCorrect = new Audio('/sounds/correct_answer.mp3');   // ← update this path
+    audioTick = new Audio('./sounds/timer_tick.mp3');          // ← update this path
+    audioCorrect = new Audio('./sounds/correct_answer.mp3');   // ← update this path
 
     // NEW: initialize placeholders for your three custom clips:
-    audioChoose = new Audio('/sounds/ChooseCorrectAnswer.wav');  // ← update this path
-    audioBG = new Audio('/sounds/background_loop.mp3');                // ← update this path
+    audioChoose = new Audio('./sounds/ChooseCorrectAnswer.wav');  // ← update this path
+    audioBG = new Audio('./sounds/background_loop.mp3');                // ← update this path
     audioBG.loop = true;
-    audioSubscribeNow = new Audio('/sounds/Subscribe Now.wav');         // ← update this path
+    audioSubscribeNow = new Audio('./sounds/Subscribe Now.wav');         // ← update this path
     }
 
 
