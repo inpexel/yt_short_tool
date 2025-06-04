@@ -26,7 +26,8 @@
       background-size: 400% 400%;
       animation: gradientBG 15s ease infinite;
       min-height: 100vh;
-      overflow-x: hidden;
+      overflow-x: hidden; 
+      overflow-y: auto; 
     }
 
     @keyframes gradientBG {
@@ -243,11 +244,7 @@
     /* Quiz Screen Styles */
     .quiz-screen {
       display: none;
-      position: fixed;
-      top: 0; /* Default, overridden by fixedSize JS */
-      left: 0; /* Default, overridden by fixedSize JS */
-      width: 100vw; /* Default, overridden by fixedSize JS */
-      height: 100vh; /* Default, overridden by fixedSize JS */
+      position: fixed; 
       background: linear-gradient(
         -45deg,
         #667eea,
@@ -259,7 +256,12 @@
       animation: gradientBG 15s ease infinite;
       z-index: 1000;
       transition: background 0.5s ease;
-      /* Centering for fixed size will be handled by JS by changing top, left, transform */
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden; 
+      transform-origin: center center; 
     }
 
 
@@ -273,14 +275,15 @@
       flex-direction: column;
       justify-content: center;
       align-items: center;
-      height: 100%; /* Takes full height of quiz-screen */
-      padding: 20px;
-      position: relative;
+      width: 100%; 
+      height: 100%; 
+      padding: 20px; /* Provides spacing from edges for content inside */
+      position: relative; /* Crucial for absolute positioning of header/timer */
     }
 
     .quiz-header {
       position: absolute;
-      top: 30px;
+      top: 30px; /* Relative to quiz-container's padding box */
       left: 50%;
       transform: translateX(-50%);
       color: white;
@@ -300,11 +303,15 @@
       box-shadow: 0 25px 50px rgba(0, 0, 0, 0.2);
       backdrop-filter: blur(15px);
       border: 2px solid rgba(255, 255, 255, 0.3);
-      max-width: 600px;
-      width: 90%;
+      max-width: 600px; 
+      width: 90%; 
       text-align: center;
       transform: translateX(0);
       transition: transform 0.5s ease, opacity 0.5s ease;
+      overflow-y: auto; 
+      max-height: 80%; /* Max height to prevent card from becoming too tall */
+      /* Consider adding margin-top if header/timer are very tall or padding on quiz-container is small */
+      /* e.g., margin-top: 50px; to push card down from header/timer */
     }
 
     .question-card.slide-out {
@@ -341,12 +348,12 @@
         #4ecdc4 360deg,
         #f0f0f0 360deg
       );
-      display: flex; /* Changed from none to flex by default */
+      display: flex;
       justify-content: center;
       align-items: center;
       position: absolute;
-      top: 20px;
-      right: 20px;
+      top: 20px;  /* Relative to quiz-container's padding box */
+      right: 20px; /* Relative to quiz-container's padding box */
       z-index: 1005;
       margin: 0;
       transition: background 0.2s linear;
@@ -548,7 +555,7 @@
       }
       .quiz-header {
         font-size: 1.2rem;
-        top: 20px;
+        top: 20px; /* Adjust if needed for smaller screens */
       }
       .home-screen {
         padding: 20px;
@@ -574,7 +581,36 @@
       .subscribe-popup h2 {
         font-size: 1.5rem;
       }
+      .question-card { 
+        padding: 20px;
+        max-width: 95%;
+      }
     }
+    
+    @media (max-height: 600px) and (min-width: 769px) { 
+        .question-text {
+            font-size: 1.2rem; 
+            margin-bottom: 15px;
+        }
+        .options-grid {
+            gap: 10px;
+            margin-top: 15px;
+        }
+        .option {
+            padding: 10px;
+            font-size: 0.9rem;
+        }
+        .option-label {
+            width: 25px;
+            height: 25px;
+            line-height: 25px;
+            margin-right: 8px;
+        }
+         .question-card {
+            padding: 15px;
+        }
+    }
+
   </style>
 </head>
 <body>
@@ -655,7 +691,7 @@
         <div class="questions-list" id="questionsList"></div>
       </div>
 
-      <!-- NEW SETTINGS SECTION -->
+      <!-- SETTINGS SECTION -->
       <div class="settings-section">
         <h3>Quiz Settings</h3>
         <div class="form-group">
@@ -676,17 +712,24 @@
           </div>
         </div>
         <div class="form-group">
-          <label>
-            <input type="checkbox" id="fixedSizeToggle" checked> Fixed Size (1080x1920 for Quiz Screen)
-          </label>
+          <label for="fixedSizeSelect">Quiz Screen Size:</label>
+          <select id="fixedSizeSelect">
+            <option value="none">None (Fullscreen/Responsive)</option>
+            <option value="vertical" selected>Vertical (1080x1920)</option>
+            <option value="horizontal">Horizontal (1920x1080)</option>
+          </select>
         </div>
          <div class="form-group">
           <label>
             <input type="checkbox" id="textToSpeechToggle"> Text to Speech Mode
           </label>
         </div>
+        <div class="form-group">
+            <label for="backgroundMusicSelect">Background Music:</label>
+            <select id="backgroundMusicSelect"></select>
+        </div>
       </div>
-      <!-- END NEW SETTINGS SECTION -->
+      <!-- END SETTINGS SECTION -->
 
       <div id="errorMessage" class="error hidden"></div>
 
@@ -698,14 +741,14 @@
 
   <!-- Quiz Screen -->
   <div class="quiz-screen" id="quizScreen">
-    <div class="quiz-header" id="quizHeaderElement">
-      <span id="questionCounter">Question 1 of 5</span>
-    </div>
-    <div class="timer-circle" id="timerCircle">
-      <div class="timer-number" id="timerNumber">5</div>
-    </div>
+    <div class="quiz-container"> <!-- quiz-header and timer-circle are NOW INSIDE here -->
+      <div class="quiz-header" id="quizHeaderElement">
+        <span id="questionCounter">Question 1 of 5</span>
+      </div>
+      <div class="timer-circle" id="timerCircle">
+        <div class="timer-number" id="timerNumber">3</div> <!-- Defaulted to 3 -->
+      </div>
 
-    <div class="quiz-container">
       <div class="question-card" id="questionCard">
         <div class="question-text" id="questionTextQuiz"></div>
         <div class="options-grid" id="optionsGrid"></div>
@@ -724,24 +767,30 @@
   <script>
     let currentTab = 'json';
     let questions = [];
-    let originalQuestions = []; // For custom range feature
+    let originalQuestions = [];
     let currentQuestionIndex = 0;
 
     let audioChoose;
-    let audioBG;
     let audioSubscribeNow;
     let audioTick;
     let audioCorrect;
+    let audioBG = null; 
 
     const optionPrefixes = ['A', 'B', 'C', 'D'];
 
-    // --- New Settings Global Variables ---
-    let countdownDuration = 5; // Default 5 seconds
-    let answerRevealDuration = 2000; // Default 2 seconds (in ms)
+    let countdownDuration = 3; // Default changed to 3
+    let answerRevealDuration = 2000; 
     let useCustomQuestionRange = false;
-    let useFixedSize = true; // Default true
+    let fixedSizeType = 'vertical'; 
     let useTextToSpeech = false;
-    // --- End New Settings ---
+    let selectedMusicPath = ''; 
+
+    const backgroundMusicTracks = [
+        // IMPORTANT: Replace with your actual file paths if different
+        { name: "Calm Loop", path: "./sounds/background_loop.mp3" }, 
+        { name: "Energetic Beat", path: "./sounds/bg_energetic.mp3" }, 
+        { name: "Study Focus", path: "./sounds/bg_study.mp3" } 
+    ];
 
     let countdownInterval;
 
@@ -754,7 +803,6 @@
       const activeTabContent = document.getElementById(tabName + 'Tab');
       if (activeTabContent) activeTabContent.classList.add('active');
       
-      // Disable custom question range toggle if not on JSON tab
       const customRangeToggle = document.getElementById('customQuestionRangeToggle');
       const customRangeInputs = document.getElementById('customRangeInputs');
       if (tabName !== 'json') {
@@ -873,18 +921,16 @@ Ensure each question has exactly four options and the correct_answer matches one
         .catch(err => showError('Unable to copy prompt: ' + err.message));
     }
 
-    function initCustomAudio() {
-      audioTick = new Audio('./sounds/timer_tick.mp3');
-      audioCorrect = new Audio('./sounds/correct_answer.mp3');
-      audioChoose = new Audio('./sounds/ChooseCorrectAnswer.wav');
-      audioBG = new Audio('./sounds/background_loop.mp3');
-      audioBG.loop = true;
-      audioSubscribeNow = new Audio('./sounds/Subscribe Now.wav');
+    function initNonBgAudio() { 
+      if (!audioChoose) audioChoose = new Audio('./sounds/ChooseCorrectAnswer.wav');
+      if (!audioSubscribeNow) audioSubscribeNow = new Audio('./sounds/Subscribe Now.wav');
+      if (!audioTick) audioTick = new Audio('./sounds/timer_tick.mp3');
+      if (!audioCorrect) audioCorrect = new Audio('./sounds/correct_answer.mp3');
     }
 
     function generateQuiz() {
       hideError();
-      if (!audioChoose) initCustomAudio(); // Initialize audio if not already done
+      initNonBgAudio(); 
 
       let parsedQuestions;
       if (currentTab === 'json') {
@@ -916,16 +962,16 @@ Ensure each question has exactly four options and the correct_answer matches one
           showError('Invalid JSON syntax: ' + e.message);
           return;
         }
-      } else { // Manual tab
+      } else { 
         if (questions.length === 0) {
           showError('Please add at least one question manually.');
           return;
         }
-        parsedQuestions = questions; // Use already built questions array
+        parsedQuestions = questions; 
       }
       
-      originalQuestions = [...parsedQuestions]; // Store the full list
-      questions = [...parsedQuestions]; // Work with a copy
+      originalQuestions = [...parsedQuestions]; 
+      questions = [...parsedQuestions]; 
 
       if (currentTab === 'json' && useCustomQuestionRange) {
           const startVal = document.getElementById('startQuestionIndex').value;
@@ -944,7 +990,6 @@ Ensure each question has exactly four options and the correct_answer matches one
               showError('Start question number cannot be greater than end question number.');
               return;
           }
-          // User inputs 1-based index. Slice is (0-based start, 0-based end (exclusive))
           questions = originalQuestions.slice(startIdxNum - 1, endIdxNum);
           
           if (questions.length === 0) {
@@ -956,41 +1001,68 @@ Ensure each question has exactly four options and the correct_answer matches one
         showError('No questions to display. Please check your input or custom range.');
         return;
       }
-
       startQuiz();
     }
 
     function startQuiz() {
       currentQuestionIndex = 0;
-      const quizScreenEl = document.getElementById('quizScreen');
-      const quizContainerEl = quizScreenEl.querySelector('.quiz-container');
+      
+      const fullscreenPromise = document.documentElement.requestFullscreen();
 
-      if (useFixedSize) {
-          quizScreenEl.style.width = '1080px';
-          quizScreenEl.style.height = '1920px';
+      fullscreenPromise
+        .then(() => {
+            console.log("Fullscreen entered successfully.");
+            setupQuizInterfaceAndBegin();
+        })
+        .catch((err) => {
+            console.warn("Fullscreen request failed or was denied:", err);
+            setupQuizInterfaceAndBegin(); 
+        });
+    }
+
+
+    function setupQuizInterfaceAndBegin() {
+      const quizScreenEl = document.getElementById('quizScreen');
+
+      quizScreenEl.style.width = '';
+      quizScreenEl.style.height = '';
+      quizScreenEl.style.top = '';
+      quizScreenEl.style.left = '';
+      quizScreenEl.style.transform = '';
+      
+      let targetWidth, targetHeight, scale;
+
+      if (fixedSizeType === 'vertical') {
+          targetWidth = 1080;
+          targetHeight = 1920;
+          quizScreenEl.style.width = targetWidth + 'px';
+          quizScreenEl.style.height = targetHeight + 'px';
           quizScreenEl.style.top = '50%';
           quizScreenEl.style.left = '50%';
-          quizScreenEl.style.transform = 'translate(-50%, -50%)';
-          quizScreenEl.style.maxWidth = '100vw';
-          quizScreenEl.style.maxHeight = '100vh';
-          quizScreenEl.style.overflow = 'hidden';
-          quizContainerEl.style.width = '100%'; // Ensure container fills fixed screen
-          quizContainerEl.style.height = '100%';
-      } else {
+          
+          const scaleX = window.innerWidth / targetWidth;
+          const scaleY = window.innerHeight / targetHeight;
+          scale = Math.min(scaleX, scaleY, 1); 
+          quizScreenEl.style.transform = `translate(-50%, -50%) scale(${scale})`;
+
+      } else if (fixedSizeType === 'horizontal') {
+          targetWidth = 1920;
+          targetHeight = 1080;
+          quizScreenEl.style.width = targetWidth + 'px';
+          quizScreenEl.style.height = targetHeight + 'px';
+          quizScreenEl.style.top = '50%';
+          quizScreenEl.style.left = '50%';
+
+          const scaleX = window.innerWidth / targetWidth;
+          const scaleY = window.innerHeight / targetHeight;
+          scale = Math.min(scaleX, scaleY, 1); 
+          quizScreenEl.style.transform = `translate(-50%, -50%) scale(${scale})`;
+      } else { 
           quizScreenEl.style.width = '100vw';
           quizScreenEl.style.height = '100vh';
           quizScreenEl.style.top = '0';
           quizScreenEl.style.left = '0';
-          quizScreenEl.style.transform = 'none';
-          quizScreenEl.style.maxWidth = 'none';
-          quizScreenEl.style.maxHeight = 'none';
-          quizScreenEl.style.overflow = 'visible'; // Default browser behavior
-          quizContainerEl.style.width = ''; // Revert to CSS
-          quizContainerEl.style.height = '100vh'; // Original style
-      }
-
-      if (!useFixedSize && !document.fullscreenElement) {
-        document.documentElement.requestFullscreen().catch(() => {});
+          quizScreenEl.style.transform = 'none'; 
       }
 
       document.getElementById('homeScreen').style.display = 'none';
@@ -1000,9 +1072,13 @@ Ensure each question has exactly four options and the correct_answer matches one
       document.getElementById('quizHeaderElement').style.display = '';
       document.getElementById('timerCircle').style.display = useTextToSpeech ? 'none' : 'flex';
 
-      if (audioBG) audioBG.play().catch(e => console.warn("BG Audio play failed:", e));
+      if (audioBG) {
+          audioBG.currentTime = 0;
+          audioBG.play().catch(e => console.warn("BG Audio play failed:", e));
+      }
       showQuestion();
     }
+
 
     function speakText(text, onEndCallback) {
         if (!useTextToSpeech || !('speechSynthesis' in window)) {
@@ -1016,7 +1092,7 @@ Ensure each question has exactly four options and the correct_answer matches one
         };
         utterance.onerror = function(event) {
             console.error('Speech synthesis error:', event.error);
-            if (onEndCallback) onEndCallback(); // Proceed even if TTS fails
+            if (onEndCallback) onEndCallback(); 
         };
         speechSynthesis.speak(utterance);
     }
@@ -1026,8 +1102,10 @@ Ensure each question has exactly four options and the correct_answer matches one
       const questionCard = document.getElementById('questionCard');
 
       document.getElementById('questionCounter').textContent = `Question ${currentQuestionIndex + 1} of ${questions.length}`;
+      document.getElementById('timerNumber').textContent = countdownDuration.toString(); // Update timer number display
+
       questionCard.className = 'question-card';
-      void questionCard.offsetWidth; // Trigger reflow for animation
+      void questionCard.offsetWidth; 
       questionCard.classList.add('slide-in');
 
       document.getElementById('questionTextQuiz').textContent = question.question;
@@ -1040,7 +1118,7 @@ Ensure each question has exactly four options and the correct_answer matches one
         const labelSpan = document.createElement('span');
         labelSpan.className = 'option-label';
         labelSpan.textContent = optionPrefixes[index];
-        const textNode = document.createTextNode(" " + optionText); // Add space after label
+        const textNode = document.createTextNode(" " + optionText); 
         optionDiv.appendChild(labelSpan);
         optionDiv.appendChild(textNode);
         optionsGrid.appendChild(optionDiv);
@@ -1067,17 +1145,17 @@ Ensure each question has exactly four options and the correct_answer matches one
         const questionText = question.question;
         const correctAnswerText = question.correct_answer;
 
-        speakText(questionText, () => { // Speak Question
-            setTimeout(() => { // Pause 1 sec
-                speakText(correctAnswerText, () => { // Speak Correct Answer
+        speakText(questionText, () => { 
+            setTimeout(() => { 
+                speakText(correctAnswerText, () => { 
                     highlightCorrectOptionOnly(correctAnswerText);
                     if (audioCorrect) {
                         audioCorrect.currentTime = 0;
                         audioCorrect.play().catch(e => console.warn("Correct audio play failed:", e));
                     }
-                    setTimeout(handleNextQuestionTransition, 1000); // Wait 1 sec after highlight
+                    setTimeout(handleNextQuestionTransition, 1000); 
                 });
-            }, 1000); // 1 sec pause after question
+            }, 1000); 
         });
     }
 
@@ -1087,7 +1165,7 @@ Ensure each question has exactly four options and the correct_answer matches one
             if (optElement.dataset.originalOption === correctAnswerText) {
                 optElement.classList.add('correct');
             } else {
-                optElement.classList.remove('correct'); // Ensure others are not marked
+                optElement.classList.remove('correct'); 
             }
         });
     }
@@ -1099,9 +1177,9 @@ Ensure each question has exactly four options and the correct_answer matches one
             if (questionCard.classList.contains('slide-in')) {
                  questionCard.classList.replace('slide-in', 'slide-out');
             } else {
-                 questionCard.classList.add('slide-out'); // Fallback if slide-in wasn't there
+                 questionCard.classList.add('slide-out'); 
             }
-            setTimeout(showQuestion, 500); // Animation duration
+            setTimeout(showQuestion, 500); 
         } else {
             endQuiz();
         }
@@ -1120,7 +1198,7 @@ Ensure each question has exactly four options and the correct_answer matches one
       const timerNumber = document.getElementById('timerNumber');
       const timerCircle = document.getElementById('timerCircle');
 
-      timerNumber.textContent = timeLeft.toString();
+      timerNumber.textContent = timeLeft.toString(); // Ensure it's set before interval starts
       updateTimerCircle(timerCircle, timeLeft, countdownDuration);
 
       countdownInterval = setInterval(() => {
@@ -1144,7 +1222,7 @@ Ensure each question has exactly four options and the correct_answer matches one
       circleEl.style.background = `conic-gradient(#ddd ${elapsedAngle}deg, #4ecdc4 ${elapsedAngle}deg 360deg)`;
     }
 
-    function revealAnswer() { // Only for non-TTS mode
+    function revealAnswer() { 
       if (audioCorrect) {
         audioCorrect.currentTime = 0;
         audioCorrect.play().catch(e => console.warn("Correct audio play failed:", e));
@@ -1157,7 +1235,6 @@ Ensure each question has exactly four options and the correct_answer matches one
     function endQuiz() {
       if (audioBG) audioBG.pause();
       if (speechSynthesis && useTextToSpeech) speechSynthesis.cancel();
-
 
       document.getElementById('questionCard').style.display = 'none';
       document.getElementById('quizHeaderElement').style.display = 'none';
@@ -1173,54 +1250,41 @@ Ensure each question has exactly four options and the correct_answer matches one
           audioSubscribeNow.play().catch(e => console.warn("Subscribe audio play failed:", e));
         }
       }, 100);
-      setTimeout(finishQuiz, 3000); // Auto-close subscribe popup and return to home
+      setTimeout(finishQuiz, 3000); 
     }
 
     function finishQuiz() {
-      if (!useFixedSize && document.fullscreenElement) {
-        document.exitFullscreen().catch(() => {});
+      if (document.fullscreenElement) {
+        document.exitFullscreen().catch((err) => console.warn("Error exiting fullscreen:", err));
       }
 
       const quizScreenEl = document.getElementById('quizScreen');
       quizScreenEl.style.display = 'none';
       quizScreenEl.classList.remove('ended');
-        // Reset fixed size styles
-      quizScreenEl.style.width = '100vw';
+      
+      quizScreenEl.style.width = '100vw'; 
       quizScreenEl.style.height = '100vh';
       quizScreenEl.style.top = '0';
       quizScreenEl.style.left = '0';
       quizScreenEl.style.transform = 'none';
-      quizScreenEl.style.maxWidth = 'none';
-      quizScreenEl.style.maxHeight = 'none';
-      quizScreenEl.style.overflow = 'visible';
-
-      const quizContainerEl = quizScreenEl.querySelector('.quiz-container');
-      quizContainerEl.style.width = ''; 
-      quizContainerEl.style.height = '100vh';
-
-
+      
       document.getElementById('homeScreen').style.display = 'flex';
       document.getElementById('questionCard').style.display = '';
       document.getElementById('quizHeaderElement').style.display = '';
-      // Timer will be set by showQuestion based on TTS mode
 
       const subscribePopup = document.getElementById('subscribePopup');
       subscribePopup.classList.remove('show');
       setTimeout(() => subscribePopup.style.display = 'none', 800);
 
-      // Reset questions for next quiz, especially if manual mode was used
-      if (currentTab === 'json') {
-        // document.getElementById('jsonInput').value = ''; // Keep JSON for re-use
-      }
       questions = []; 
       originalQuestions = [];
-      updateQuestionsList(); // Clear manual list if it was populated
+      updateQuestionsList(); 
 
       window.scrollTo(0, 0);
     }
 
     document.addEventListener('DOMContentLoaded', () => {
-      switchTab('json'); // Default tab
+      switchTab('json'); 
       const sampleJSON = {
         questions: [
           { question: "Capital of France?", options: ["Berlin", "Madrid", "Paris", "Rome"], correct_answer: "Paris" },
@@ -1229,7 +1293,6 @@ Ensure each question has exactly four options and the correct_answer matches one
       };
       document.getElementById('jsonInput').placeholder = 'Paste JSON or Upload...\n\nExample:\n' + JSON.stringify(sampleJSON, null, 2);
 
-      // --- Populate Settings Dropdowns & Set Listeners ---
       const countdownSelect = document.getElementById('countdownDurationSelect');
       const answerRevealSelect = document.getElementById('answerRevealDurationSelect');
       for (let i = 1; i <= 10; i++) {
@@ -1239,7 +1302,7 @@ Ensure each question has exactly four options and the correct_answer matches one
         countdownSelect.appendChild(option.cloneNode(true));
         answerRevealSelect.appendChild(option.cloneNode(true));
       }
-      countdownSelect.value = countdownDuration;
+      countdownSelect.value = countdownDuration; // Reflects the JS variable default (now 3)
       answerRevealSelect.value = answerRevealDuration / 1000;
 
       countdownSelect.addEventListener('change', e => countdownDuration = parseInt(e.target.value));
@@ -1252,9 +1315,50 @@ Ensure each question has exactly four options and the correct_answer matches one
         customRangeInputs.classList.toggle('hidden', !useCustomQuestionRange);
       });
       
-      document.getElementById('fixedSizeToggle').addEventListener('change', e => useFixedSize = e.target.checked);
       document.getElementById('textToSpeechToggle').addEventListener('change', e => useTextToSpeech = e.target.checked);
-      // --- End Settings Setup ---
+
+      const fixedSizeSelect = document.getElementById('fixedSizeSelect');
+      fixedSizeSelect.value = fixedSizeType; 
+      fixedSizeSelect.addEventListener('change', e => fixedSizeType = e.target.value);
+
+      const musicSelect = document.getElementById('backgroundMusicSelect');
+      const noMusicOption = document.createElement('option');
+      noMusicOption.value = ""; 
+      noMusicOption.textContent = "No Music";
+      musicSelect.appendChild(noMusicOption);
+
+      backgroundMusicTracks.forEach(track => {
+          const option = document.createElement('option');
+          option.value = track.path;
+          option.textContent = track.name;
+          musicSelect.appendChild(option);
+      });
+
+      if (backgroundMusicTracks.length > 0) {
+          musicSelect.value = backgroundMusicTracks[0].path; 
+          selectedMusicPath = backgroundMusicTracks[0].path;
+          if (selectedMusicPath) { // Create audio object only if a path is selected
+            audioBG = new Audio(selectedMusicPath);
+            audioBG.loop = true;
+          }
+      } else {
+          musicSelect.value = ""; 
+      }
+      
+      musicSelect.addEventListener('change', e => {
+          selectedMusicPath = e.target.value;
+          if (audioBG) { 
+              audioBG.pause();
+              audioBG.currentTime = 0;
+              audioBG.src = ""; // Release resource
+          }
+          if (selectedMusicPath) { 
+              audioBG = new Audio(selectedMusicPath);
+              audioBG.loop = true;
+          } else { 
+              audioBG = null;
+          }
+      });
     });
   </script>
 </body>
