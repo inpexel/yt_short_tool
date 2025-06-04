@@ -205,7 +205,7 @@
       border: none;
       padding: 15px 30px;
       border-radius: 10px;
-      font-size: 16px;
+      font-size: 4.5rem;
       font-weight: bold;
       cursor: pointer;
       transition: all 0.3s ease;
@@ -479,12 +479,13 @@
     .subscribe-popup h2 {
       color: #333;
       margin-bottom: 15px;
-      font-size: 1.8rem;
+      font-size: 4rem;
     }
 
     .subscribe-popup p {
       color: #666;
       margin-bottom: 20px;
+      font-size: 2.5rem;
     }
 
     .questions-list {
@@ -552,180 +553,125 @@
 
     /* Vertical Mode (9:16 aspect ratio - e.g., 1080x1920) */
     .quiz-screen.vertical-mode .quiz-container {
-      padding: 20px 15px; /* More vertical space */
-    }
-    .quiz-screen.vertical-mode .quiz-header {
-      font-size: 2.2rem; /* Larger header text */
-      top: 50px;
-    }
-    .quiz-screen.vertical-mode .timer-circle {
-      width: 100px; height: 100px;
-      top: 40px; right: 20px;
-    }
-    .quiz-screen.vertical-mode .timer-circle::before {
-      width: 80px; height: 80px;
-    }
-    .quiz-screen.vertical-mode .timer-number {
-      font-size: 3rem;
-    }
-    .quiz-screen.vertical-mode .question-card {
-      width: 95%; /* Take more width */
-      max-height: 70%; /* Allow card to use significant height */
-      padding: 30px 25px;
-      margin-top: 140px; /* Space below header/timer */
-    }
-    .quiz-screen.vertical-mode .question-text {
-      font-size: 2.8rem; /* Much larger question text */
-      margin-bottom: 30px;
-      line-height: 1.3;
-    }
-    .quiz-screen.vertical-mode .options-grid {
-      display: flex;
-      flex-direction: column; /* Single column for options */
-      gap: 15px; /* Spacing between options */
-      margin-top: auto; /* Push options down if question is short */
-    }
-    .quiz-screen.vertical-mode .option {
-      font-size: 1.8rem; /* Larger option text */
-      padding: 25px 20px; /* More padding for touch */
-      min-height: 80px; /* Minimum height for options */
-    }
-    .quiz-screen.vertical-mode .option-label {
-      width: 50px; height: 50px;
-      font-size: 1.5rem;
-      margin-right: 20px;
-    }
+  padding: 20px 15px; 
+}
+.quiz-screen.vertical-mode .quiz-header {
+  font-size: 2.5rem; /* INCREASED */
+  top: 60px; /* More space from top */
+}
+.quiz-screen.vertical-mode .timer-circle {
+  width: 110px; height: 110px; /* INCREASED */
+  top: 45px; right: 25px;
+}
+.quiz-screen.vertical-mode .timer-circle::before {
+  width: 90px; height: 90px; /* INCREASED */
+}
+.quiz-screen.vertical-mode .timer-number {
+  font-size: 3.5rem; /* INCREASED */
+}
+.quiz-screen.vertical-mode .question-card {
+  width: 95%; 
+  max-height: 85%; /* Use more of the vertical space */
+  padding: 40px 25px; /* More vertical padding */
+  margin-top: 170px; /* Push down below header/timer */
+}
+.quiz-screen.vertical-mode .question-text {
+  font-size: 4.5rem; /* SIGNIFICANTLY INCREASED for thumbnail visibility */
+  margin-bottom: 40px; /* More space */
+  line-height: 1.2; /* Tighter line height for large font */
+  text-align: left;
+}
+.quiz-screen.vertical-mode .options-grid {
+  display: flex;
+  flex-direction: column; 
+  gap: 20px; /* More space between options */
+  margin-top: auto; 
+}
+.quiz-screen.vertical-mode .option {
+  font-size: 4rem; /* SIGNIFICANTLY INCREASED */
+  padding: 25px 20px; 
+  min-height: 90px; /* Taller options */
+}
+.quiz-screen.vertical-mode .option-label {
+  width: 60px; height: 60px; /* INCREASED */
+  font-size: 2.5rem; /* INCREASED */
+  margin-right: 20px;
+}
 
 
     /* Horizontal Mode (16:9 aspect ratio - e.g., 1920x1080) */
-    .quiz-screen.horizontal-mode .quiz-container {
-      padding: 15px 30px;
-    }
-    .quiz-screen.horizontal-mode .quiz-header {
-      font-size: 2.5rem;
-      top: 30px;
-    }
-    .quiz-screen.horizontal-mode .timer-circle {
-      width: 110px; height: 110px;
-      top: 20px; right: 30px;
-    }
-    .quiz-screen.horizontal-mode .timer-circle::before {
-      width: 90px; height: 90px;
-    }
-    .quiz-screen.horizontal-mode .timer-number {
-      font-size: 3.2rem;
-    }
-    .quiz-screen.horizontal-mode .question-card {
-      width: 85%;
-      max-height: 75%; /* Allow card to use significant height */
-      padding: 35px;
-      margin-top: 100px; /* Space below header/timer */
-    }
-    .quiz-screen.horizontal-mode .question-text {
-      font-size: 2.4rem; /* Larger question text */
-      margin-bottom: 25px;
-      line-height: 1.4;
-    }
-    .quiz-screen.horizontal-mode .options-grid {
-      display: flex;
-      flex-direction: column; /* Single column for options */
-      gap: 12px; /* Spacing between options */
-      margin-top: auto; /* Push options down */
-    }
-    .quiz-screen.horizontal-mode .option {
-      font-size: 1.6rem; /* Larger option text */
-      padding: 20px;
-      min-height: 70px;
-    }
-    .quiz-screen.horizontal-mode .option-label {
-      width: 45px; height: 45px;
-      font-size: 1.4rem;
-      margin-right: 18px;
-    }
+.quiz-screen.horizontal-mode .quiz-container {
+  padding: 20px 40px;
+}
+.quiz-screen.horizontal-mode .quiz-header {
+  font-size: 2.8rem; /* INCREASED */
+  top: 40px;
+}
+.quiz-screen.horizontal-mode .timer-circle {
+  width: 120px; height: 120px; /* INCREASED */
+  top: 30px; right: 40px;
+}
+.quiz-screen.horizontal-mode .timer-circle::before {
+  width: 100px; height: 100px; /* INCREASED */
+}
+.quiz-screen.horizontal-mode .timer-number {
+  font-size: 3.8rem; /* INCREASED */
+}
+.quiz-screen.horizontal-mode .question-card {
+  width: 90%;
+  max-height: 80%; 
+  padding: 40px;
+  margin-top: 130px; /* Push down below header/timer */
+}
+.quiz-screen.horizontal-mode .question-text {
+  font-size: 3.2rem; /* SIGNIFICANTLY INCREASED */
+  margin-bottom: 35px;
+  line-height: 1.3;
+  text-align: left;
+}
+.quiz-screen.horizontal-mode .options-grid {
+  display: flex;
+  flex-direction: column; 
+  gap: 15px; 
+  margin-top: auto; 
+}
+.quiz-screen.horizontal-mode .option {
+  font-size: 2.5rem; /* SIGNIFICANTLY INCREASED */
+  padding: 25px;
+  min-height: 80px;
+}
+.quiz-screen.horizontal-mode .option-label {
+  width: 55px; height: 55px; /* INCREASED */
+  font-size: 1.8rem; /* INCREASED */
+  margin-right: 25px;
+}
 
 
-    @media (max-width: 768px) { /* Responsive adjustments for smaller screens (non-fixed mode) */
-      .options-grid {
-        grid-template-columns: 1fr; /* Default to single column on smaller screens */
-      }
-      .options-container {
-        grid-template-columns: 1fr;
-      }
-      .question-text { /* General smaller screen question text */
-        font-size: 1.4rem;
-      }
-      .timer-circle {
-        width: 70px; height: 70px;
-        top: 15px; right: 15px;
-      }
-      .timer-circle::before {
-        width: 50px; height: 50px;
-      }
-      .timer-number {
-        font-size: 1.8rem;
-      }
-      .quiz-header {
-        font-size: 1.2rem;
-        top: 20px;
-      }
-      .home-screen {
-        padding: 20px;
-      }
-      .logo h1 {
-        font-size: 2rem;
-      }
-      .logo p {
-        font-size: 1rem;
-      }
-      .btn {
-        padding: 12px 24px;
-        font-size: 14px;
-      }
-      .generate-btn {
-        padding: 15px;
-        font-size: 16px;
-      }
+ /* This media query now ONLY affects the settings page */
+@media (max-width: 768px) { 
+  .options-container { /* This is the manual input form on the settings page */
+    grid-template-columns: 1fr;
+  }
+  .home-screen {
+    padding: 20px;
+  }
+  .logo h1 {
+    font-size: 2rem;
+  }
+  .logo p {
+    font-size: 1rem;
+  }
+  .btn {
+    padding: 12px 24px;
+    font-size: 14px;
+  }
+  .generate-btn {
+    padding: 15px;
+    font-size: 16px;
+  }
+}
 
-      .question-card { /* General smaller screen card padding */
-        padding: 20px;
-        max-width: 95%;
-      }
-      .option-label { /* Smaller option labels for general mobile */
-        width: 30px; height: 30px;
-        font-size: 0.9rem;
-        margin-right: 10px;
-      }
-      .option { /* General smaller screen option */
-        font-size: 1rem;
-        padding: 12px;
-      }
-    }
 
-    /* This media query might conflict or be less relevant with fixed size modes,
-       but kept for graceful degradation if fixed modes are not used. */
-    @media (max-height: 600px) and (min-width: 769px) { /* For landscape tablets or small desktop windows */
-      .question-text {
-        font-size: 1.2rem;
-        margin-bottom: 15px;
-      }
-      .options-grid {
-        gap: 10px;
-        margin-top: 15px;
-      }
-       .quiz-screen:not(.horizontal-mode):not(.vertical-mode) .option { /* Apply only if not in fixed mode */
-        padding: 10px;
-        font-size: 0.9rem;
-      }
-       .quiz-screen:not(.horizontal-mode):not(.vertical-mode) .option-label {
-        width: 25px;
-        height: 25px;
-        /* line-height removed as flex handles centering */
-        margin-right: 8px;
-      }
-       .quiz-screen:not(.horizontal-mode):not(.vertical-mode) .question-card {
-        padding: 15px;
-      }
-    }
   </style>
 </head>
 <body>
