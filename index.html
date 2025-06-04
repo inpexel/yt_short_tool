@@ -1291,7 +1291,7 @@ Ensure each question has exactly four options and the correct_answer matches one
         // 2. Wait for 1.5 seconds
         setTimeout(() => {
           // 3. Speak the correct answer
-          const answerToSpeak = `The correct answer is: ${correctAnswerText}`;
+          const answerToSpeak = `${correctAnswerText}`;
           speakText(answerToSpeak, () => {
             // This callback executes after the answer has finished speaking
 
