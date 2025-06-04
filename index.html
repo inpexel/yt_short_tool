@@ -301,11 +301,11 @@
     .question-card {
       background: rgba(255, 255, 255, 0.95);
       border-radius: 20px;
-      padding: 30px; /* Base padding */
+      padding: 20px; /* Base padding */
       box-shadow: 0 25px 50px rgba(0, 0, 0, 0.2);
       backdrop-filter: blur(15px);
       border: 2px solid rgba(255, 255, 255, 0.3);
-      max-width: 600px; /* Default max-width */
+      max-width: 95%;
       width: 90%;
       text-align: center;
       transform: translateX(0);
@@ -1281,38 +1281,31 @@ Ensure each question has exactly four options and the correct_answer matches one
 
     function showQuestionWithTTS() {
       const question = questions[currentQuestionIndex];
-      const questionText = question.question;
+      const questionTextToSpeak = question.question;
       const correctAnswerText = question.correct_answer;
 
-      // Speak "Question X of Y: [Question Text]"
-      const fullQuestionIntro = `Question ${currentQuestionIndex + 1} of ${questions.length}: ${questionText}`;
+      // 1. Speak the current question
+      speakText(questionTextToSpeak, () => {
+        // This callback executes after the question has finished speaking
 
-      speakText(fullQuestionIntro, () => {
-        // Speak options one by one
-        let optionIdx = 0;
-        function speakNextOption() {
-            if (optionIdx < question.options.length) {
-                const optionToSpeak = `${optionPrefixes[optionIdx]}: ${question.options[optionIdx]}`;
-                speakText(optionToSpeak, () => {
-                    optionIdx++;
-                    speakNextOption();
-                });
-            } else {
-                // All options spoken, now reveal answer
-                setTimeout(() => {
-                    const revealText = `The correct answer is: ${correctAnswerText}`;
-                    speakText(revealText, () => {
-                        highlightCorrectOptionOnly(correctAnswerText);
-                        if (audioCorrect) {
-                            audioCorrect.currentTime = 0;
-                            audioCorrect.play().catch(e => console.warn("Correct audio play failed:", e));
-                        }
-                        setTimeout(handleNextQuestionTransition, 2000); // Wait a bit after speaking answer
-                    });
-                }, 1000); // Pause before revealing answer
+        // 2. Wait for 1.5 seconds
+        setTimeout(() => {
+          // 3. Speak the correct answer
+          const answerToSpeak = `The correct answer is: ${correctAnswerText}`;
+          speakText(answerToSpeak, () => {
+            // This callback executes after the answer has finished speaking
+
+            // 4. Immediately highlight the correct option
+            highlightCorrectOptionOnly(correctAnswerText);
+            if (audioCorrect) {
+              audioCorrect.currentTime = 0;
+              audioCorrect.play().catch(e => console.warn("Correct audio play failed:", e));
             }
-        }
-        speakNextOption(); // Start speaking options
+
+            // 5. Wait for a bit (e.g., 2 seconds) for the user to see the highlight, then transition
+            setTimeout(handleNextQuestionTransition, 2000); // You can adjust this 2000ms (2s) duration
+          });
+        }, 1500); // 1.5-second delay
       });
     }
 
@@ -1415,7 +1408,7 @@ Ensure each question has exactly four options and the correct_answer matches one
           audioSubscribeNow.play().catch(e => console.warn("Subscribe audio play failed:", e));
         }
       }, 100); // Short delay before showing popup
-      setTimeout(finishQuiz, 5000); // Show subscribe popup for 5 seconds
+      setTimeout(finishQuiz, 2000); // Show subscribe popup for 5 seconds
     }
 
     function finishQuiz() {
