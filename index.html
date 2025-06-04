@@ -156,6 +156,7 @@
     }
 
     .form-group input[type='text'],
+    .form-group input[type='number'],
     .form-group select {
       width: 100%;
       padding: 10px;
@@ -163,6 +164,12 @@
       border-radius: 5px;
       font-size: 14px;
     }
+     .form-group input[type='checkbox'] {
+      width: auto;
+      margin-right: 8px;
+      vertical-align: middle;
+    }
+
 
     .options-container {
       display: grid;
@@ -177,8 +184,6 @@
       border: 1px solid #ddd;
       border-radius: 5px;
     }
-
-    
 
     .subscribe {
       background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
@@ -239,10 +244,10 @@
     .quiz-screen {
       display: none;
       position: fixed;
-      top: 0;
-      left: 0;
-      width: 100vw;
-      height: 100vh;
+      top: 0; /* Default, overridden by fixedSize JS */
+      left: 0; /* Default, overridden by fixedSize JS */
+      width: 100vw; /* Default, overridden by fixedSize JS */
+      height: 100vh; /* Default, overridden by fixedSize JS */
       background: linear-gradient(
         -45deg,
         #667eea,
@@ -254,7 +259,9 @@
       animation: gradientBG 15s ease infinite;
       z-index: 1000;
       transition: background 0.5s ease;
+      /* Centering for fixed size will be handled by JS by changing top, left, transform */
     }
+
 
     .quiz-screen.ended {
       background: white;
@@ -266,7 +273,7 @@
       flex-direction: column;
       justify-content: center;
       align-items: center;
-      height: 100vh;
+      height: 100%; /* Takes full height of quiz-screen */
       padding: 20px;
       position: relative;
     }
@@ -334,7 +341,7 @@
         #4ecdc4 360deg,
         #f0f0f0 360deg
       );
-      display: flex;
+      display: flex; /* Changed from none to flex by default */
       justify-content: center;
       align-items: center;
       position: absolute;
@@ -391,7 +398,6 @@
       transform: translateY(-2px);
     }
 
-    /* New: style for letter-box inside option */
     .option-label {
       display: inline-block;
       width: 30px;
@@ -503,6 +509,19 @@
     .hidden {
       display: none !important;
     }
+    
+    .settings-section {
+        margin-top: 20px;
+        padding: 15px;
+        background: #f8f9fa;
+        border-radius: 10px;
+        border: 1px solid #dee2e6;
+    }
+    .settings-section h3 {
+        margin-bottom: 15px;
+        color: #333;
+    }
+
 
     @media (max-width: 768px) {
       .options-grid {
@@ -580,16 +599,7 @@
         <textarea
           class="json-input"
           id="jsonInput"
-          placeholder='Paste your JSON here or upload a file...
-{
-  "questions": [
-    {
-      "question": "What is the capital of India?",
-      "options": ["Mumbai", "New Delhi", "Kolkata", "Chennai"],
-      "correct_answer": "New Delhi"
-    }
-  ]
-}'
+          placeholder='Paste your JSON here or upload a file...'
         ></textarea>
         <input
           type="file"
@@ -604,7 +614,6 @@
         >
           📁 Upload JSON File
         </button>
-        <!-- Added "Past JSON" and "Copy Prompt" buttons -->
         <button class="btn btn-secondary" onclick="loadPreviousJSON()">
         Past JSON
         </button>
@@ -624,26 +633,10 @@
             />
           </div>
           <div class="options-container">
-            <input
-              type="text"
-              id="option1"
-              placeholder="Option 1"
-            />
-            <input
-              type="text"
-              id="option2"
-              placeholder="Option 2"
-            />
-            <input
-              type="text"
-              id="option3"
-              placeholder="Option 3"
-            />
-            <input
-              type="text"
-              id="option4"
-              placeholder="Option 4"
-            />
+            <input type="text" id="option1" placeholder="Option 1" />
+            <input type="text" id="option2" placeholder="Option 2" />
+            <input type="text" id="option3" placeholder="Option 3" />
+            <input type="text" id="option4" placeholder="Option 4" />
           </div>
           <div class="form-group">
             <label for="correctAnswer">Correct Answer:</label>
@@ -659,9 +652,41 @@
             ➕ Add Question
           </button>
         </div>
-
         <div class="questions-list" id="questionsList"></div>
       </div>
+
+      <!-- NEW SETTINGS SECTION -->
+      <div class="settings-section">
+        <h3>Quiz Settings</h3>
+        <div class="form-group">
+          <label for="countdownDurationSelect">Countdown Duration (seconds):</label>
+          <select id="countdownDurationSelect"></select>
+        </div>
+        <div class="form-group">
+          <label for="answerRevealDurationSelect">Answer Reveal Duration (seconds):</label>
+          <select id="answerRevealDurationSelect"></select>
+        </div>
+        <div class="form-group">
+          <label>
+            <input type="checkbox" id="customQuestionRangeToggle"> Custom Question Range (JSON tab only)
+          </label>
+          <div id="customRangeInputs" class="hidden" style="display: flex; gap: 10px; margin-top: 5px;">
+            <input type="number" id="startQuestionIndex" placeholder="Start Q#" min="1" style="width: 48%;">
+            <input type="number" id="endQuestionIndex" placeholder="End Q#" min="1" style="width: 48%;">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>
+            <input type="checkbox" id="fixedSizeToggle" checked> Fixed Size (1080x1920 for Quiz Screen)
+          </label>
+        </div>
+         <div class="form-group">
+          <label>
+            <input type="checkbox" id="textToSpeechToggle"> Text to Speech Mode
+          </label>
+        </div>
+      </div>
+      <!-- END NEW SETTINGS SECTION -->
 
       <div id="errorMessage" class="error hidden"></div>
 
@@ -699,49 +724,54 @@
   <script>
     let currentTab = 'json';
     let questions = [];
+    let originalQuestions = []; // For custom range feature
     let currentQuestionIndex = 0;
 
-let audioChoose;          // placeholder for “choose the correct answer”
-let audioBG;              // placeholder for background loop
-let audioSubscribeNow;    // placeholder for “subscribe now”
-let audioTick;            // placeholder for timer-tick sound (old system)
-let audioCorrect;         // placeholder for correct-answer sound (old system)
-
+    let audioChoose;
+    let audioBG;
+    let audioSubscribeNow;
+    let audioTick;
+    let audioCorrect;
 
     const optionPrefixes = ['A', 'B', 'C', 'D'];
 
+    // --- New Settings Global Variables ---
+    let countdownDuration = 5; // Default 5 seconds
+    let answerRevealDuration = 2000; // Default 2 seconds (in ms)
+    let useCustomQuestionRange = false;
+    let useFixedSize = true; // Default true
+    let useTextToSpeech = false;
+    // --- End New Settings ---
+
+    let countdownInterval;
+
     function switchTab(tabName) {
       currentTab = tabName;
-      document
-        .querySelectorAll('.tab')
-        .forEach(function (t) {
-          t.classList.remove('active');
-        });
-      const activeTabButton =
-        tabName === 'json'
-          ? document.querySelector('.tab:nth-child(1)')
-          : document.querySelector('.tab:nth-child(2)');
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      const activeTabButton = tabName === 'json' ? document.querySelector('.tab:nth-child(1)') : document.querySelector('.tab:nth-child(2)');
       if (activeTabButton) activeTabButton.classList.add('active');
-      document
-        .querySelectorAll('.tab-content')
-        .forEach(function (t) {
-          t.classList.remove('active');
-        });
-      const activeTabContent = document.getElementById(
-        tabName + 'Tab'
-      );
-      if (activeTabContent)
-        activeTabContent.classList.add('active');
+      document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+      const activeTabContent = document.getElementById(tabName + 'Tab');
+      if (activeTabContent) activeTabContent.classList.add('active');
+      
+      // Disable custom question range toggle if not on JSON tab
+      const customRangeToggle = document.getElementById('customQuestionRangeToggle');
+      const customRangeInputs = document.getElementById('customRangeInputs');
+      if (tabName !== 'json') {
+        customRangeToggle.checked = false;
+        customRangeToggle.disabled = true;
+        useCustomQuestionRange = false;
+        customRangeInputs.classList.add('hidden');
+      } else {
+        customRangeToggle.disabled = false;
+      }
     }
 
     function handleFileUpload(event) {
       const file = event.target.files[0];
       if (file && file.type === 'application/json') {
         const reader = new FileReader();
-        reader.onload = function (e) {
-          document.getElementById('jsonInput').value =
-            e.target.result;
-        };
+        reader.onload = e => document.getElementById('jsonInput').value = e.target.result;
         reader.readAsText(file);
       } else {
         showError('Please select a valid JSON file.');
@@ -749,34 +779,16 @@ let audioCorrect;         // placeholder for correct-answer sound (old system)
     }
 
     function addQuestion() {
-      const questionTextInput = document
-        .getElementById('questionTextManual')
-        .value.trim();
+      const questionTextInput = document.getElementById('questionTextManual').value.trim();
       const opts = [
-        document
-          .getElementById('option1')
-          .value.trim(),
-        document
-          .getElementById('option2')
-          .value.trim(),
-        document
-          .getElementById('option3')
-          .value.trim(),
-        document
-          .getElementById('option4')
-          .value.trim(),
+        document.getElementById('option1').value.trim(),
+        document.getElementById('option2').value.trim(),
+        document.getElementById('option3').value.trim(),
+        document.getElementById('option4').value.trim(),
       ];
-      const correctIndex = document.getElementById(
-        'correctAnswer'
-      ).value;
+      const correctIndex = document.getElementById('correctAnswer').value;
 
-      if (
-        !questionTextInput ||
-        opts.some(function (opt) {
-          return !opt;
-        }) ||
-        correctIndex === ''
-      ) {
+      if (!questionTextInput || opts.some(opt => !opt) || correctIndex === '') {
         showError('Please fill in all fields for the question.');
         return;
       }
@@ -791,28 +803,15 @@ let audioCorrect;         // placeholder for correct-answer sound (old system)
     }
 
     function updateQuestionsList() {
-      const listContainer = document.getElementById(
-        'questionsList'
-      );
+      const listContainer = document.getElementById('questionsList');
       listContainer.innerHTML = '';
-      questions.forEach(function (q, index) {
+      questions.forEach((q, index) => {
         const item = document.createElement('div');
         item.className = 'question-item';
-        item.innerHTML =
-          '<h4>Q' +
-          (index + 1) +
-          ': ' +
-          q.question +
-          '</h4>' +
-          '<div class="options">Opts: ' +
-          q.options.join(', ') +
-          '</div>' +
-          '<div class="correct">Ans: ' +
-          q.correct_answer +
-          '</div>' +
-          '<button class="btn btn-secondary" onclick="removeQuestion(' +
-          index +
-          ')" style="margin-top:10px;padding:5px 10px;font-size:12px;">🗑️ Remove</button>';
+        item.innerHTML = `<h4>Q${index + 1}: ${q.question}</h4>
+                          <div class="options">Opts: ${q.options.join(', ')}</div>
+                          <div class="correct">Ans: ${q.correct_answer}</div>
+                          <button class="btn btn-secondary" onclick="removeQuestion(${index})" style="margin-top:10px;padding:5px 10px;font-size:12px;">🗑️ Remove</button>`;
         listContainer.appendChild(item);
       });
     }
@@ -823,17 +822,8 @@ let audioCorrect;         // placeholder for correct-answer sound (old system)
     }
 
     function clearManualForm() {
-      const ids = [
-        'questionTextManual',
-        'option1',
-        'option2',
-        'option3',
-        'option4',
-        'correctAnswer',
-      ];
-      ids.forEach(function (id) {
-        document.getElementById(id).value = '';
-      });
+      ['questionTextManual', 'option1', 'option2', 'option3', 'option4', 'correctAnswer']
+        .forEach(id => document.getElementById(id).value = '');
     }
 
     function showError(message) {
@@ -843,409 +833,429 @@ let audioCorrect;         // placeholder for correct-answer sound (old system)
     }
 
     function hideError() {
-      document
-        .getElementById('errorMessage')
-        .classList.add('hidden');
+      document.getElementById('errorMessage').classList.add('hidden');
     }
 
-    // -------------------------------
-    // “Past JSON” and “Copy Prompt” logic
-    // -------------------------------
-
- async function loadPreviousJSON() {
-  try {
-    const text = await navigator.clipboard.readText();
-    if (text && text.trim().length > 0) {
-      document.getElementById('jsonInput').value = text;
-      hideError();
-    } else {
-      showError('Clipboard is empty or contains no text.');
+    async function loadPreviousJSON() {
+      try {
+        const text = await navigator.clipboard.readText();
+        if (text && text.trim().length > 0) {
+          document.getElementById('jsonInput').value = text;
+          hideError();
+        } else {
+          showError('Clipboard is empty or contains no text.');
+        }
+      } catch (err) {
+        showError('Unable to read from clipboard: ' + err.message);
+      }
     }
-  } catch (err) {
-    showError('Unable to read from clipboard: ' + err.message);
-  }
+
+    function copyPrompt(event) {
+      const promptText = `Please provide quiz questions in the following JSON format:
+{
+  "questions": [
+    {
+      "question": "Your question here?",
+      "options": ["Option A", "Option B", "Option C", "Option D"],
+      "correct_answer": "The text of the correct option"
+    }
+    // ... more questions
+  ]
 }
-
-function copyPrompt(event) {
-  const promptText = 'test prompt data'; // ← update this later with your real prompt
-  navigator.clipboard.writeText(promptText)
-    .then(() => {
-      const btn = event.currentTarget;
-      const original = btn.textContent;
-      btn.textContent = 'Copied!';
-      setTimeout(() => (btn.textContent = original), 1000);
-    })
-    .catch((err) => {
-      showError('Unable to copy prompt: ' + err.message);
-    });
-}
-
-
-    // -------------------------------
-    // Quiz / Audio / Timer Logic
-    // -------------------------------
-
-    // Initialize audio objects (replace paths with actual file URLs)
-   function initCustomAudio() {
-    // NEW: initialize old timer + correct sounds:
-    audioTick = new Audio('./sounds/timer_tick.mp3');          // ← update this path
-    audioCorrect = new Audio('./sounds/correct_answer.mp3');   // ← update this path
-
-    // NEW: initialize placeholders for your three custom clips:
-    audioChoose = new Audio('./sounds/ChooseCorrectAnswer.wav');  // ← update this path
-    audioBG = new Audio('./sounds/background_loop.mp3');                // ← update this path
-    audioBG.loop = true;
-    audioSubscribeNow = new Audio('./sounds/Subscribe Now.wav');         // ← update this path
+Ensure each question has exactly four options and the correct_answer matches one of the options exactly.`;
+      navigator.clipboard.writeText(promptText)
+        .then(() => {
+          const btn = event.currentTarget;
+          const original = btn.textContent;
+          btn.textContent = 'Copied!';
+          setTimeout(() => btn.textContent = original, 1500);
+        })
+        .catch(err => showError('Unable to copy prompt: ' + err.message));
     }
 
+    function initCustomAudio() {
+      audioTick = new Audio('./sounds/timer_tick.mp3');
+      audioCorrect = new Audio('./sounds/correct_answer.mp3');
+      audioChoose = new Audio('./sounds/ChooseCorrectAnswer.wav');
+      audioBG = new Audio('./sounds/background_loop.mp3');
+      audioBG.loop = true;
+      audioSubscribeNow = new Audio('./sounds/Subscribe Now.wav');
+    }
 
     function generateQuiz() {
       hideError();
-      if (!audioChoose) {
-        initCustomAudio();
-      }
+      if (!audioChoose) initCustomAudio(); // Initialize audio if not already done
 
+      let parsedQuestions;
       if (currentTab === 'json') {
-        const jsonInput = document
-          .getElementById('jsonInput')
-          .value.trim();
+        const jsonInput = document.getElementById('jsonInput').value.trim();
         if (!jsonInput) {
-          showError(
-            'Please enter JSON data or upload a JSON file.'
-          );
+          showError('Please enter JSON data or upload a JSON file.');
           return;
         }
         try {
           const data = JSON.parse(jsonInput);
-          if (
-            !data.questions ||
-            !Array.isArray(data.questions) ||
-            data.questions.length === 0
-          ) {
-            showError(
-              'Invalid JSON: "questions" array missing or empty.'
-            );
+          if (!data.questions || !Array.isArray(data.questions) || data.questions.length === 0) {
+            showError('Invalid JSON: "questions" array missing or empty.');
             return;
           }
           for (let i = 0; i < data.questions.length; i++) {
             const q = data.questions[i];
-            if (
-              !q.question ||
-              typeof q.question !== 'string' ||
-              !q.options ||
-              !Array.isArray(q.options) ||
-              q.options.length !== 4 ||
-              !q.options.every(function (opt) {
-                return typeof opt === 'string';
-              }) ||
-              !q.correct_answer ||
-              typeof q.correct_answer !== 'string' ||
-              !q.options.includes(q.correct_answer)
-            ) {
-              showError(
-                'Q' +
-                  (i + 1) +
-                  ' invalid. Check format: {question:string, options:[string,string,string,string], correct_answer:string (must be one of options)}'
-              );
+            if (!q.question || typeof q.question !== 'string' ||
+                !q.options || !Array.isArray(q.options) || q.options.length !== 4 ||
+                !q.options.every(opt => typeof opt === 'string') ||
+                !q.correct_answer || typeof q.correct_answer !== 'string' ||
+                !q.options.includes(q.correct_answer)) {
+              showError(`Q${i + 1} invalid. Format: {question:string, options:[string,string,string,string], correct_answer:string (must be one of options)}`);
               return;
             }
           }
-          questions = data.questions;
-
-          // Save this JSON into localStorage for “Past JSON” feature:
-          localStorage.setItem(
-            'previousJSON',
-            JSON.stringify(data)
-          );
+          parsedQuestions = data.questions;
+          localStorage.setItem('previousJSON', JSON.stringify(data));
         } catch (e) {
           showError('Invalid JSON syntax: ' + e.message);
           return;
         }
-      } else {
+      } else { // Manual tab
         if (questions.length === 0) {
-          showError('Please add at least one question.');
+          showError('Please add at least one question manually.');
           return;
         }
+        parsedQuestions = questions; // Use already built questions array
       }
+      
+      originalQuestions = [...parsedQuestions]; // Store the full list
+      questions = [...parsedQuestions]; // Work with a copy
+
+      if (currentTab === 'json' && useCustomQuestionRange) {
+          const startVal = document.getElementById('startQuestionIndex').value;
+          const endVal = document.getElementById('endQuestionIndex').value;
+          let startIdxNum = parseInt(startVal);
+          let endIdxNum = parseInt(endVal);
+
+          if (!startVal || !endVal || isNaN(startIdxNum) || isNaN(endIdxNum)) {
+              showError('Please enter valid start and end question numbers for the custom range.');
+              return;
+          }
+          if (startIdxNum < 1) startIdxNum = 1;
+          if (endIdxNum > originalQuestions.length) endIdxNum = originalQuestions.length;
+          
+          if (startIdxNum > endIdxNum) {
+              showError('Start question number cannot be greater than end question number.');
+              return;
+          }
+          // User inputs 1-based index. Slice is (0-based start, 0-based end (exclusive))
+          questions = originalQuestions.slice(startIdxNum - 1, endIdxNum);
+          
+          if (questions.length === 0) {
+              showError('The selected custom range results in no questions. Check your numbers.');
+              return;
+          }
+      }
+      if (questions.length === 0) {
+        showError('No questions to display. Please check your input or custom range.');
+        return;
+      }
+
       startQuiz();
     }
 
     function startQuiz() {
       currentQuestionIndex = 0;
+      const quizScreenEl = document.getElementById('quizScreen');
+      const quizContainerEl = quizScreenEl.querySelector('.quiz-container');
 
-      if (!document.fullscreenElement) {
-        document.documentElement
-          .requestFullscreen()
-          .catch(() => {
-            // ignore if denied
-          });
+      if (useFixedSize) {
+          quizScreenEl.style.width = '1080px';
+          quizScreenEl.style.height = '1920px';
+          quizScreenEl.style.top = '50%';
+          quizScreenEl.style.left = '50%';
+          quizScreenEl.style.transform = 'translate(-50%, -50%)';
+          quizScreenEl.style.maxWidth = '100vw';
+          quizScreenEl.style.maxHeight = '100vh';
+          quizScreenEl.style.overflow = 'hidden';
+          quizContainerEl.style.width = '100%'; // Ensure container fills fixed screen
+          quizContainerEl.style.height = '100%';
+      } else {
+          quizScreenEl.style.width = '100vw';
+          quizScreenEl.style.height = '100vh';
+          quizScreenEl.style.top = '0';
+          quizScreenEl.style.left = '0';
+          quizScreenEl.style.transform = 'none';
+          quizScreenEl.style.maxWidth = 'none';
+          quizScreenEl.style.maxHeight = 'none';
+          quizScreenEl.style.overflow = 'visible'; // Default browser behavior
+          quizContainerEl.style.width = ''; // Revert to CSS
+          quizContainerEl.style.height = '100vh'; // Original style
       }
 
-      document.getElementById('homeScreen').style.display =
-        'none';
-      const quizScreenEl = document.getElementById(
-        'quizScreen'
-      );
+      if (!useFixedSize && !document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(() => {});
+      }
+
+      document.getElementById('homeScreen').style.display = 'none';
       quizScreenEl.classList.remove('ended');
       quizScreenEl.style.display = 'block';
-      document
-        .getElementById('questionCard')
-        .style.display = '';
-      document
-        .getElementById('quizHeaderElement')
-        .style.display = '';
+      document.getElementById('questionCard').style.display = '';
+      document.getElementById('quizHeaderElement').style.display = '';
+      document.getElementById('timerCircle').style.display = useTextToSpeech ? 'none' : 'flex';
 
-      // Start background music loop
-      if (audioBG) audioBG.play();
-
+      if (audioBG) audioBG.play().catch(e => console.warn("BG Audio play failed:", e));
       showQuestion();
+    }
+
+    function speakText(text, onEndCallback) {
+        if (!useTextToSpeech || !('speechSynthesis' in window)) {
+            if(onEndCallback) onEndCallback();
+            return;
+        }
+        speechSynthesis.cancel(); 
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.onend = function() {
+            if (onEndCallback) onEndCallback();
+        };
+        utterance.onerror = function(event) {
+            console.error('Speech synthesis error:', event.error);
+            if (onEndCallback) onEndCallback(); // Proceed even if TTS fails
+        };
+        speechSynthesis.speak(utterance);
     }
 
     function showQuestion() {
       const question = questions[currentQuestionIndex];
-      const questionCard = document.getElementById(
-        'questionCard'
-      );
+      const questionCard = document.getElementById('questionCard');
 
-      document.getElementById('questionCounter').textContent =
-        'Question ' +
-        (currentQuestionIndex + 1) +
-        ' of ' +
-        questions.length;
+      document.getElementById('questionCounter').textContent = `Question ${currentQuestionIndex + 1} of ${questions.length}`;
       questionCard.className = 'question-card';
-      void questionCard.offsetWidth;
+      void questionCard.offsetWidth; // Trigger reflow for animation
       questionCard.classList.add('slide-in');
 
-      document.getElementById(
-        'questionTextQuiz'
-      ).textContent = question.question;
-      const optionsGrid = document.getElementById(
-        'optionsGrid'
-      );
+      document.getElementById('questionTextQuiz').textContent = question.question;
+      const optionsGrid = document.getElementById('optionsGrid');
       optionsGrid.innerHTML = '';
-      question.options.forEach(function (
-        optionText,
-        index
-      ) {
-        // Wrap the “A, B, C, D” in a styled <span>
+      question.options.forEach((optionText, index) => {
         const optionDiv = document.createElement('div');
         optionDiv.className = 'option';
         optionDiv.dataset.originalOption = optionText;
-
-        // Create a span for the letter box
         const labelSpan = document.createElement('span');
         labelSpan.className = 'option-label';
         labelSpan.textContent = optionPrefixes[index];
-
-        // Create a text node for the actual option text
-        const textNode = document.createTextNode(optionText);
-
+        const textNode = document.createTextNode(" " + optionText); // Add space after label
         optionDiv.appendChild(labelSpan);
         optionDiv.appendChild(textNode);
-
         optionsGrid.appendChild(optionDiv);
       });
 
-      resetTimer();
-
-      // Play “choose the correct answer” audio shortly after showing question
-      if (audioChoose) {
-        setTimeout(() => {
-          audioChoose.currentTime = 0;
-          audioChoose.play();
-        }, 300);
+      if (useTextToSpeech) {
+        document.getElementById('timerCircle').style.display = 'none';
+        showQuestionWithTTS();
+      } else {
+        document.getElementById('timerCircle').style.display = 'flex';
+        resetTimer();
+        if (audioChoose) {
+          setTimeout(() => {
+            audioChoose.currentTime = 0;
+            audioChoose.play().catch(e => console.warn("Choose audio play failed:", e));
+          }, 300);
+        }
+        setTimeout(startCountdown, 800);
       }
+    }
+    
+    function showQuestionWithTTS() {
+        const question = questions[currentQuestionIndex];
+        const questionText = question.question;
+        const correctAnswerText = question.correct_answer;
 
-      setTimeout(startCountdown, 800);
+        speakText(questionText, () => { // Speak Question
+            setTimeout(() => { // Pause 1 sec
+                speakText(correctAnswerText, () => { // Speak Correct Answer
+                    highlightCorrectOptionOnly(correctAnswerText);
+                    if (audioCorrect) {
+                        audioCorrect.currentTime = 0;
+                        audioCorrect.play().catch(e => console.warn("Correct audio play failed:", e));
+                    }
+                    setTimeout(handleNextQuestionTransition, 1000); // Wait 1 sec after highlight
+                });
+            }, 1000); // 1 sec pause after question
+        });
+    }
+
+    function highlightCorrectOptionOnly(correctAnswerText) {
+        const optionElements = document.querySelectorAll('.option');
+        optionElements.forEach(optElement => {
+            if (optElement.dataset.originalOption === correctAnswerText) {
+                optElement.classList.add('correct');
+            } else {
+                optElement.classList.remove('correct'); // Ensure others are not marked
+            }
+        });
+    }
+    
+    function handleNextQuestionTransition() {
+        currentQuestionIndex++;
+        if (currentQuestionIndex < questions.length) {
+            const questionCard = document.getElementById('questionCard');
+            if (questionCard.classList.contains('slide-in')) {
+                 questionCard.classList.replace('slide-in', 'slide-out');
+            } else {
+                 questionCard.classList.add('slide-out'); // Fallback if slide-in wasn't there
+            }
+            setTimeout(showQuestion, 500); // Animation duration
+        } else {
+            endQuiz();
+        }
     }
 
     function resetTimer() {
-      const timerCircle = document.getElementById(
-        'timerCircle'
-      );
-      const timerNumber = document.getElementById(
-        'timerNumber'
-      );
-      timerNumber.textContent = '5';
+      const timerCircle = document.getElementById('timerCircle');
+      const timerNumber = document.getElementById('timerNumber');
+      timerNumber.textContent = countdownDuration.toString();
       timerCircle.style.background = `conic-gradient(#4ecdc4 360deg, #ddd 360deg)`;
     }
 
-    const TOTAL_DURATION = 3;
-    let countdownInterval;
-
-function startCountdown() {
-  clearInterval(countdownInterval);
-  let timeLeft = TOTAL_DURATION;
-  const timerNumber = document.getElementById('timerNumber');
-  const timerCircle = document.getElementById('timerCircle');
-
-  timerNumber.textContent = timeLeft.toString();
-  updateTimerCircle(timerCircle, timeLeft);
-
-  countdownInterval = setInterval(function () {
-    timeLeft--;
-    timerNumber.textContent = timeLeft.toString();
-    updateTimerCircle(timerCircle, timeLeft);
-
-    // NEW: play timer-tick sound each second
-    if (audioTick) {
-      audioTick.currentTime = 0;
-      audioTick.play();
-    }
-
-    if (timeLeft <= 0) {
+    function startCountdown() {
       clearInterval(countdownInterval);
-      revealAnswer();
+      let timeLeft = countdownDuration;
+      const timerNumber = document.getElementById('timerNumber');
+      const timerCircle = document.getElementById('timerCircle');
+
+      timerNumber.textContent = timeLeft.toString();
+      updateTimerCircle(timerCircle, timeLeft, countdownDuration);
+
+      countdownInterval = setInterval(() => {
+        timeLeft--;
+        timerNumber.textContent = timeLeft.toString();
+        updateTimerCircle(timerCircle, timeLeft, countdownDuration);
+        if (audioTick) {
+          audioTick.currentTime = 0;
+          audioTick.play().catch(e => console.warn("Tick audio play failed:", e));
+        }
+        if (timeLeft <= 0) {
+          clearInterval(countdownInterval);
+          revealAnswer();
+        }
+      }, 1000);
     }
-  }, 1000);
-}
 
-
-    function updateTimerCircle(circleEl, timeLeft) {
-      const elapsedRatio =
-        (TOTAL_DURATION - timeLeft) / TOTAL_DURATION;
+    function updateTimerCircle(circleEl, timeLeft, totalDuration) {
+      const elapsedRatio = (totalDuration - timeLeft) / totalDuration;
       const elapsedAngle = elapsedRatio * 360;
       circleEl.style.background = `conic-gradient(#ddd ${elapsedAngle}deg, #4ecdc4 ${elapsedAngle}deg 360deg)`;
     }
 
-function revealAnswer() {
-  // NEW: play correct-answer sound right before highlighting
-  if (audioCorrect) {
-    audioCorrect.currentTime = 0;
-    audioCorrect.play();
-  }
-
-  const question = questions[currentQuestionIndex];
-  const optionElements = document.querySelectorAll('.option');
-  optionElements.forEach(function (optElement) {
-    if (optElement.dataset.originalOption === question.correct_answer) {
-      optElement.classList.add('correct');
+    function revealAnswer() { // Only for non-TTS mode
+      if (audioCorrect) {
+        audioCorrect.currentTime = 0;
+        audioCorrect.play().catch(e => console.warn("Correct audio play failed:", e));
+      }
+      const question = questions[currentQuestionIndex];
+      highlightCorrectOptionOnly(question.correct_answer);
+      setTimeout(handleNextQuestionTransition, answerRevealDuration);
     }
-  });
-
-  setTimeout(function () {
-    currentQuestionIndex++;
-    if (currentQuestionIndex < questions.length) {
-      const questionCard = document.getElementById('questionCard');
-      questionCard.classList.replace('slide-in', 'slide-out');
-      setTimeout(function () {
-        showQuestion();
-      }, 500);
-    } else {
-      endQuiz();
-    }
-  }, 2000);
-}
-
 
     function endQuiz() {
-      // Stop background music
       if (audioBG) audioBG.pause();
+      if (speechSynthesis && useTextToSpeech) speechSynthesis.cancel();
 
-      document.getElementById(
-        'questionCard'
-      ).style.display = 'none';
-      document.getElementById(
-        'quizHeaderElement'
-      ).style.display = 'none';
-      document.getElementById(
-        'timerCircle'
-      ).style.display = 'none';
-      document
-        .getElementById('quizScreen')
-        .classList.add('ended');
 
-      // Show subscribe popup
-      const subscribePopup = document.getElementById(
-        'subscribePopup'
-      );
+      document.getElementById('questionCard').style.display = 'none';
+      document.getElementById('quizHeaderElement').style.display = 'none';
+      document.getElementById('timerCircle').style.display = 'none';
+      document.getElementById('quizScreen').classList.add('ended');
+
+      const subscribePopup = document.getElementById('subscribePopup');
       subscribePopup.style.display = 'block';
-      setTimeout(function () {
+      setTimeout(() => {
         subscribePopup.classList.add('show');
-
-        // Play “subscribe now” audio
         if (audioSubscribeNow) {
           audioSubscribeNow.currentTime = 0;
-          audioSubscribeNow.play();
+          audioSubscribeNow.play().catch(e => console.warn("Subscribe audio play failed:", e));
         }
       }, 100);
-
-      setTimeout(finishQuiz, 3000);
+      setTimeout(finishQuiz, 3000); // Auto-close subscribe popup and return to home
     }
 
     function finishQuiz() {
-      if (document.fullscreenElement) {
+      if (!useFixedSize && document.fullscreenElement) {
         document.exitFullscreen().catch(() => {});
       }
 
-      const quizScreenEl = document.getElementById(
-        'quizScreen'
-      );
+      const quizScreenEl = document.getElementById('quizScreen');
       quizScreenEl.style.display = 'none';
       quizScreenEl.classList.remove('ended');
-      document.getElementById('homeScreen').style.display =
-        'flex';
+        // Reset fixed size styles
+      quizScreenEl.style.width = '100vw';
+      quizScreenEl.style.height = '100vh';
+      quizScreenEl.style.top = '0';
+      quizScreenEl.style.left = '0';
+      quizScreenEl.style.transform = 'none';
+      quizScreenEl.style.maxWidth = 'none';
+      quizScreenEl.style.maxHeight = 'none';
+      quizScreenEl.style.overflow = 'visible';
 
-      document.getElementById('questionCard').style.display =
-        '';
-      document.getElementById(
-        'quizHeaderElement'
-      ).style.display = '';
-      document.getElementById('timerCircle').style.display = '';
+      const quizContainerEl = quizScreenEl.querySelector('.quiz-container');
+      quizContainerEl.style.width = ''; 
+      quizContainerEl.style.height = '100vh';
 
-      const subscribePopup = document.getElementById(
-        'subscribePopup'
-      );
+
+      document.getElementById('homeScreen').style.display = 'flex';
+      document.getElementById('questionCard').style.display = '';
+      document.getElementById('quizHeaderElement').style.display = '';
+      // Timer will be set by showQuestion based on TTS mode
+
+      const subscribePopup = document.getElementById('subscribePopup');
       subscribePopup.classList.remove('show');
-      setTimeout(
-        function () {
-          subscribePopup.style.display = 'none';
-        },
-        800
-      );
+      setTimeout(() => subscribePopup.style.display = 'none', 800);
 
+      // Reset questions for next quiz, especially if manual mode was used
       if (currentTab === 'json') {
-        questions = [];
-        document.getElementById('jsonInput').value = '';
+        // document.getElementById('jsonInput').value = ''; // Keep JSON for re-use
       }
+      questions = []; 
+      originalQuestions = [];
+      updateQuestionsList(); // Clear manual list if it was populated
+
       window.scrollTo(0, 0);
     }
 
-    document.addEventListener(
-      'DOMContentLoaded',
-      function () {
-        switchTab('json');
-        const sampleJSON = {
-          questions: [
-            {
-              question: 'Capital of France?',
-              options: [
-                'Berlin',
-                'Madrid',
-                'Paris',
-                'Rome',
-              ],
-              correct_answer: 'Paris',
-            },
-            {
-              question: 'Largest Planet?',
-              options: [
-                'Earth',
-                'Mars',
-                'Jupiter',
-                'Saturn',
-              ],
-              correct_answer: 'Jupiter',
-            },
-          ],
-        };
-        document.getElementById(
-          'jsonInput'
-        ).placeholder =
-          'Paste JSON or Upload...\n\nExample:\n' +
-          JSON.stringify(sampleJSON, null, 2);
+    document.addEventListener('DOMContentLoaded', () => {
+      switchTab('json'); // Default tab
+      const sampleJSON = {
+        questions: [
+          { question: "Capital of France?", options: ["Berlin", "Madrid", "Paris", "Rome"], correct_answer: "Paris" },
+          { question: "Largest Planet?", options: ["Earth", "Mars", "Jupiter", "Saturn"], correct_answer: "Jupiter" },
+        ],
+      };
+      document.getElementById('jsonInput').placeholder = 'Paste JSON or Upload...\n\nExample:\n' + JSON.stringify(sampleJSON, null, 2);
+
+      // --- Populate Settings Dropdowns & Set Listeners ---
+      const countdownSelect = document.getElementById('countdownDurationSelect');
+      const answerRevealSelect = document.getElementById('answerRevealDurationSelect');
+      for (let i = 1; i <= 10; i++) {
+        let option = document.createElement('option');
+        option.value = i;
+        option.textContent = i + (i === 1 ? ' second' : ' seconds');
+        countdownSelect.appendChild(option.cloneNode(true));
+        answerRevealSelect.appendChild(option.cloneNode(true));
       }
-    );
+      countdownSelect.value = countdownDuration;
+      answerRevealSelect.value = answerRevealDuration / 1000;
+
+      countdownSelect.addEventListener('change', e => countdownDuration = parseInt(e.target.value));
+      answerRevealSelect.addEventListener('change', e => answerRevealDuration = parseInt(e.target.value) * 1000);
+      
+      const customRangeToggle = document.getElementById('customQuestionRangeToggle');
+      const customRangeInputs = document.getElementById('customRangeInputs');
+      customRangeToggle.addEventListener('change', e => {
+        useCustomQuestionRange = e.target.checked;
+        customRangeInputs.classList.toggle('hidden', !useCustomQuestionRange);
+      });
+      
+      document.getElementById('fixedSizeToggle').addEventListener('change', e => useFixedSize = e.target.checked);
+      document.getElementById('textToSpeechToggle').addEventListener('change', e => useTextToSpeech = e.target.checked);
+      // --- End Settings Setup ---
+    });
   </script>
 </body>
 </html>
