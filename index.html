@@ -199,6 +199,39 @@
       margin: 5px;
     }
 
+    /* Styles for the new Subscribe CTA Overlay */
+.subscribe-cta-overlay {
+  position: absolute;
+  bottom: 5%; /* Position at the bottom */
+  left: 50%;
+  transform: translateX(-50%) scale(0); /* Initially hidden and scaled down */
+  transform-origin: center bottom;
+  background: rgba(0, 0, 0, 0.7); /* Semi-transparent background */
+  padding: 15px 30px;
+  border-radius: 15px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+  z-index: 1010; /* Above question card, below system popups */
+  opacity: 0;
+  transition: transform 0.5s cubic-bezier(0.68, -0.55, 0.27, 1.55), opacity 0.4s ease; /* Scale up/down animation */
+  display: none; /* Will be controlled by JS */
+}
+
+.subscribe-cta-overlay.visible {
+  transform: translateX(-50%) scale(1);
+  opacity: 1;
+  display: block; /* Make it visible */
+}
+
+.subscribe-cta-overlay .btn-sbs { /* Re-use existing button style or customize */
+  font-size: 1.5rem; /* Make it prominent */
+  padding: 12px 25px;
+}
+
+/* Hide CTA specific settings if main toggle is off */
+#subscribeCTASettingsContainer.hidden {
+    display: none;
+}
+
     .btn-sbs {
       background: linear-gradient(45deg, #ff1515, #f70000);
       color: white;
@@ -801,6 +834,31 @@
             value="100"
           />
         </div>
+
+                <!-- NEW SUBSCRIBE CTA SETTINGS - ADD THIS -->
+        <h4 style="margin-top: 20px; margin-bottom: 10px; color: #333;">Subscribe CTA Settings (Horizontal Mode Only)</h4>
+        <div class="form-group">
+          <label>
+            <input type="checkbox" id="showSubscribeCTAToggle" /> Show Subscribe CTA
+          </label>
+        </div>
+        <div id="subscribeCTASettingsContainer" class="hidden">
+            <div class="form-group">
+                <label for="subscribeCTADelay">CTA Delay (seconds after question appears):</label>
+                <input type="number" id="subscribeCTADelay" value="240" min="0" />
+            </div>
+            <div class="form-group">
+                <label for="subscribeCTAVisibleDuration">CTA Visible Duration (seconds):</label>
+                <input type="number" id="subscribeCTAVisibleDuration" value="8" min="1" />
+            </div>
+            <div class="form-group">
+                <label>
+                    <input type="checkbox" id="loopSubscribeCTAToggle" /> Loop Subscribe CTA
+                </label>
+            </div>
+        </div>
+        <!-- END NEW SUBSCRIBE CTA SETTINGS -->
+
       </div>
       <!-- END SETTINGS SECTION -->
 
@@ -827,6 +885,12 @@
         <div class="options-grid" id="optionsGrid"></div>
       </div>
     </div>
+
+    <div class="subscribe-cta-overlay" id="subscribeCTAOverlay">
+        <button class="btn-sbs">Subscribe!</button>
+        <!-- You can add more elements here, like a YouTube logo or channel name -->
+    </div>
+    <!-- END SUBSCRIBE CTA OVERLAY -->
 
     <div class="subscribe-popup" id="subscribePopup">
       <p>Subscribe for more educational content like this!</p>
@@ -856,6 +920,16 @@
     let fixedSizeType = 'vertical';
     let useTextToSpeech = false;
     let selectedMusicPath = '';
+
+
+        // NEW CTA VARIABLES - ADD THESE
+    let showSubscribeCTA = false;
+    let loopSubscribeCTA = false;
+    let subscribeCTADelay = 5000; // milliseconds
+    let subscribeCTAVisibleDuration = 3000; // milliseconds
+    let subscribeCTATimer = null;
+    let subscribeCTALoopInterval = null;
+    // END NEW CTA VARIABLES
 
     const backgroundMusicTracks = [
       { name: "Calm Loop", path: "./sounds/background_loop.mp3" },
@@ -1178,6 +1252,36 @@ Ensure each question has exactly four options and the correct_answer matches one
       const question = questions[currentQuestionIndex];
       const questionCard = document.getElementById('questionCard');
 
+       // --- START: CTA Management ---
+      clearTimeout(subscribeCTATimer); // Clear any existing timer for CTA
+      clearInterval(subscribeCTALoopInterval); // Clear loop interval
+      hideCTASubscribeOverlay(); // Hide CTA when new question shows
+
+      if (fixedSizeType === 'horizontal' && showSubscribeCTA) {
+        const manageCTA = () => {
+            subscribeCTATimer = setTimeout(() => {
+                showCTASubscribeOverlay();
+                subscribeCTATimer = setTimeout(() => {
+                    hideCTASubscribeOverlay();
+                    // If looping is NOT enabled, we don't set up the interval again for this question
+                }, subscribeCTAVisibleDuration);
+            }, subscribeCTADelay);
+        };
+
+        if (loopSubscribeCTA) {
+            manageCTA(); // Show the first one
+            subscribeCTALoopInterval = setInterval(() => {
+                // To prevent immediate re-show if visible duration + delay is short
+                if (!document.getElementById('subscribeCTAOverlay').classList.contains('visible')) {
+                    manageCTA();
+                }
+            }, subscribeCTADelay + subscribeCTAVisibleDuration + 1000); // Loop after delay + visible time + a small buffer
+        } else {
+            manageCTA(); // Show only once per question
+        }
+      }
+      // --- END: CTA Management ---
+
       document.getElementById('questionCounter').textContent = `Question ${
         currentQuestionIndex + 1
       } of ${questions.length}`;
@@ -1340,6 +1444,12 @@ Ensure each question has exactly four options and the correct_answer matches one
       if (audioBG) audioBG.pause();
       if (speechSynthesis && useTextToSpeech) speechSynthesis.cancel();
 
+      // --- START: Clear CTA Timers on Quiz End ---
+      clearTimeout(subscribeCTATimer);
+      clearInterval(subscribeCTALoopInterval);
+      hideCTASubscribeOverlay(); // Ensure it's hidden
+      // --- END: Clear CTA Timers on Quiz End ---
+
       document.getElementById('questionCard').style.display = 'none';
       document.getElementById('quizHeaderElement').style.display = 'none';
       document.getElementById('timerCircle').style.display = 'none';
@@ -1357,10 +1467,33 @@ Ensure each question has exactly four options and the correct_answer matches one
       setTimeout(finishQuiz, 2000); // Show subscribe popup for 5 seconds
     }
 
+    // new functiona for subscribe button
+        function showCTASubscribeOverlay() {
+        const ctaOverlay = document.getElementById('subscribeCTAOverlay');
+        if (fixedSizeType === 'horizontal' && showSubscribeCTA && ctaOverlay) {
+            ctaOverlay.classList.add('visible');
+            // Optional: Play a sound
+        }
+    }
+
+    function hideCTASubscribeOverlay() {
+        const ctaOverlay = document.getElementById('subscribeCTAOverlay');
+        if (ctaOverlay) {
+            ctaOverlay.classList.remove('visible');
+        }
+    }
+    // end of new subscribe button
+
     function finishQuiz() {
       if (document.fullscreenElement) {
         document.exitFullscreen().catch(err => console.warn("Error exiting fullscreen:", err));
       }
+
+         // --- START: Clear CTA Timers on Finish Quiz ---
+      clearTimeout(subscribeCTATimer);
+      clearInterval(subscribeCTALoopInterval);
+      hideCTASubscribeOverlay();
+      // --- END: Clear CTA Timers on Finish Quiz ---
 
       const quizScreenEl = document.getElementById('quizScreen');
       quizScreenEl.style.display = 'none';
@@ -1427,6 +1560,35 @@ Ensure each question has exactly four options and the correct_answer matches one
       const fixedSizeSelect = document.getElementById('fixedSizeSelect');
       fixedSizeSelect.value = fixedSizeType; // Default 'vertical'
       fixedSizeSelect.addEventListener('change', e => (fixedSizeType = e.target.value));
+
+            // --- START: NEW CTA SETTINGS EVENT LISTENERS ---
+      const showSubscribeCTAToggle = document.getElementById('showSubscribeCTAToggle');
+      const subscribeCTASettingsContainer = document.getElementById('subscribeCTASettingsContainer');
+      const loopSubscribeCTAToggle = document.getElementById('loopSubscribeCTAToggle');
+      const subscribeCTADelayInput = document.getElementById('subscribeCTADelay');
+      const subscribeCTAVisibleDurationInput = document.getElementById('subscribeCTAVisibleDuration');
+
+      showSubscribeCTAToggle.addEventListener('change', e => {
+        showSubscribeCTA = e.target.checked;
+        subscribeCTASettingsContainer.classList.toggle('hidden', !showSubscribeCTA);
+      });
+
+      loopSubscribeCTAToggle.addEventListener('change', e => {
+        loopSubscribeCTA = e.target.checked;
+      });
+
+      subscribeCTADelayInput.addEventListener('change', e => {
+        subscribeCTADelay = parseInt(e.target.value) * 1000;
+        if (isNaN(subscribeCTADelay) || subscribeCTADelay < 0) subscribeCTADelay = 0;
+      });
+       subscribeCTADelayInput.dispatchEvent(new Event('change')); // Initialize value
+
+      subscribeCTAVisibleDurationInput.addEventListener('change', e => {
+        subscribeCTAVisibleDuration = parseInt(e.target.value) * 1000;
+        if (isNaN(subscribeCTAVisibleDuration) || subscribeCTAVisibleDuration < 1000) subscribeCTAVisibleDuration = 1000;
+      });
+      subscribeCTAVisibleDurationInput.dispatchEvent(new Event('change')); // Initialize value
+      // --- END: NEW CTA SETTINGS EVENT LISTENERS ---
 
       const musicSelect = document.getElementById('backgroundMusicSelect');
       const noMusicOption = document.createElement('option');
