@@ -920,6 +920,7 @@
     let fixedSizeType = 'vertical';
     let useTextToSpeech = false;
     let selectedMusicPath = '';
+    let ttsVoice = null; // To store the 'en-IN' voice object
 
 
         // NEW CTA VARIABLES - ADD THESE
@@ -1238,6 +1239,12 @@ Ensure each question has exactly four options and the correct_answer matches one
       }
       speechSynthesis.cancel();
       const utterance = new SpeechSynthesisUtterance(text);
+
+      // Use the specific 'en-IN' voice if it was found
+      if (ttsVoice) {
+        utterance.voice = ttsVoice;
+      }
+
       utterance.onend = function() {
         if (onEndCallback) onEndCallback();
       };
@@ -1555,7 +1562,49 @@ Ensure each question has exactly four options and the correct_answer matches one
         customRangeInputs.classList.toggle('hidden', !useCustomQuestionRange);
       });
 
-      document.getElementById('textToSpeechToggle').addEventListener('change', e => (useTextToSpeech = e.target.checked));
+          // --- START: Text to Speech with Voice Selection Logic ---
+      const checkForIndianEnglishVoice = () => {
+        // The getVoices() list can be empty initially and is populated async.
+        const voices = window.speechSynthesis.getVoices();
+        ttsVoice = voices.find(voice => voice.lang === 'en-IN');
+
+        // Only show a message if the user has actually enabled TTS mode.
+        if (useTextToSpeech) {
+          if (ttsVoice) {
+            console.log("Indian English voice found and set:", ttsVoice.name);
+            // If the voice is found, clear any "not found" errors.
+            const errorEl = document.getElementById('errorMessage');
+            if (errorEl.textContent.includes("Indian English voice not available")) {
+               hideError();
+            }
+          } else {
+            console.warn("Indian English (en-IN) voice not available.");
+            showError("Warning: Indian English voice not available. Using default voice.");
+          }
+        }
+      };
+
+      // The 'voiceschanged' event fires when the list of available voices is ready.
+      // We must listen for this as getVoices() can be empty on page load.
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.onvoiceschanged = checkForIndianEnglishVoice;
+      }
+
+      document.getElementById('textToSpeechToggle').addEventListener('change', e => {
+        useTextToSpeech = e.target.checked;
+        if (useTextToSpeech) {
+          // When the user toggles it on, run the check immediately.
+          // The voice list should be populated by now due to the onvoiceschanged handler.
+          checkForIndianEnglishVoice();
+        } else {
+          // When the user toggles it off, hide any related warning.
+          const errorEl = document.getElementById('errorMessage');
+          if (errorEl.textContent.includes("Indian English voice not available")) {
+               hideError();
+          }
+        }
+      });
+      // --- END: Text to Speech with Voice Selection Logic ---
 
       const fixedSizeSelect = document.getElementById('fixedSizeSelect');
       fixedSizeSelect.value = fixedSizeType; // Default 'vertical'
