@@ -1345,24 +1345,29 @@ Ensure each question has exactly four options and the correct_answer matches one
       speakText(questionTextToSpeak, () => {
         // This callback executes after the question has finished speaking
 
-        // 2. Wait for 1.5 seconds
+        // 2. Wait for 1.5 seconds (or your desired pause after the question)
         setTimeout(() => {
-          // 3. Speak the correct answer
-          const answerToSpeak = `${correctAnswerText}`;
-          speakText(answerToSpeak, () => {
-            // This callback executes after the answer has finished speaking
+          // 3. Highlight the correct option VISUALLY FIRST
+          highlightCorrectOptionOnly(correctAnswerText);
+          if (audioCorrect) { // Play sound effect for correct answer if available
+            audioCorrect.currentTime = 0;
+            audioCorrect.play().catch(e => console.warn("Correct audio play failed:", e));
+          }
 
-            // 4. Immediately highlight the correct option
-            highlightCorrectOptionOnly(correctAnswerText);
-            if (audioCorrect) {
-              audioCorrect.currentTime = 0;
-              audioCorrect.play().catch(e => console.warn("Correct audio play failed:", e));
-            }
+          // 4. THEN, speak the correct answer
+          // Add a very short delay (e.g., 100-200ms) to ensure visual highlight registers before speech.
+          // This can make the experience feel a bit smoother.
+          setTimeout(() => {
+            const answerToSpeak = `${correctAnswerText}`;
+            speakText(answerToSpeak, () => {
+              // This callback executes after the answer has finished speaking
 
-            // 5. Wait for a bit (e.g., 2 seconds) for the user to see the highlight, then transition
-            setTimeout(handleNextQuestionTransition, 2000); // You can adjust this 2000ms (2s) duration
-          });
-        }, 1500); // 1.5-second delay
+              // 5. Wait for a bit (e.g., 2 seconds) for the user to process, then transition
+              setTimeout(handleNextQuestionTransition, 1000); // You can adjust this 2000ms (2s) duration
+            });
+          }, 150); // Short delay (150ms) before speaking the answer
+
+        }, 1500); // 1.5-second delay after question is spoken
       });
     }
 
